@@ -1,0 +1,22 @@
+{
+    "directories": {
+        "commands": "./commands",
+        "evens": "./events"
+    },
+    "colors": {
+        "primary": "#EB5937",
+        "secondary": "#392061",
+
+        "positive": "#456F74",
+        "negative": "#6F1A07",
+
+        "list": {
+            "orange": "#EB5937",
+            "purple": "#392061",
+            "green": "#456F74",
+            "red": "#6F1A07",
+            "black": "#1A1B25",
+            "white": "#EBE9E9"
+        }
+    }
+}
