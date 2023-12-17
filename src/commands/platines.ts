@@ -15,6 +15,7 @@ import PlatinesLoop from "./platines/loop";
 import PlatinesJump from "./platines/jump";
 import PlatinesDelete from "./platines/delete";
 import PlatinesClear from "./platines/clear";
+import PlatinesVolume from "./platines/volume";
 
 export default class BotPlatines extends BotCommandGroup {
     constructor(lasido: Lasido) {
@@ -25,7 +26,7 @@ export default class BotPlatines extends BotCommandGroup {
         }, [
             PlatinesPauseResume, PlatinesNext, PlatinesPrevious, PlatineNowPlaying,
             PlatinesPlay, PlatineQueue, PlatinesStop, PlatineShuffle, PlatinePlayer,
-            PlatinesLoop, PlatinesJump, PlatinesDelete, PlatinesClear
+            PlatinesLoop, PlatinesJump, PlatinesDelete, PlatinesClear, PlatinesVolume
         ])
     }
 

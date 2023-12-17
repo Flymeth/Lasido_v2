@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -11,7 +34,9 @@ const tracks_1 = require("../../utils/music/tracks");
 const fast_average_color_node_1 = require("fast-average-color-node");
 const colors_1 = require("../../utils/colors");
 const settings_1 = require("../../utils/music/settings");
-exports.stickPlayersFooterMessage = "The player is in stick mode. All messages will be sent above it.";
+const play_dl_1 = require("play-dl");
+const converter = __importStar(require("../../utils/music/converter"));
+exports.stickPlayersFooterMessage = "The player is in stick mode. All messages in this channel go above this one.";
 class PlatinePlayer extends SubCommandClass_1.default {
     constructor(lasido) {
         super(lasido, {
@@ -20,7 +45,12 @@ class PlatinePlayer extends SubCommandClass_1.default {
             options: [
                 {
                     name: "stick",
-                    description: "If you want the player to be sticked to the bottom of the chat.",
+                    description: "If you want the player to be sticked to the bottom of the chat (beta command: can be instable).",
+                    type: discord_js_1.ApplicationCommandOptionType.Boolean
+                },
+                {
+                    name: "force",
+                    description: "If a player already exists, force to recreate a new player and delete the existing one.",
                     type: discord_js_1.ApplicationCommandOptionType.Boolean
                 }
             ]
@@ -122,11 +152,15 @@ class PlatinePlayer extends SubCommandClass_1.default {
                     return;
                 return channel.messages.fetch(message).catch(() => undefined);
             }).catch(() => undefined);
-            if (playerMessage)
-                return interaction.reply({
-                    content: `Sorry, there is already a player in this guild.\n[Click to access it](${playerMessage.url})`,
-                    ephemeral: true
-                });
+            if (playerMessage) {
+                if (!interaction.options.getBoolean("force"))
+                    return interaction.reply({
+                        content: `Sorry, there is already a player in this guild.\n[Click to access it](${playerMessage.url})`,
+                        ephemeral: true
+                    });
+                else
+                    playerMessage.delete().catch(() => undefined);
+            }
         }
         const MusicOptionEmojis = {
             shuffle: "🔀",
@@ -162,7 +196,7 @@ class PlatinePlayer extends SubCommandClass_1.default {
             if (!platines)
                 return;
             const { options, queue } = (await platines.settings).music;
-            const details = typeof video === "string" ? await (0, tracks_1.getVideoInfos)(video) : video;
+            const details = video instanceof play_dl_1.YouTubeVideo ? video : await (converter.convertToYoutubeVideos(video).then(r => r[0]));
             const author = await platines.lasido.users.fetch(queue[id].author);
             embed.setTitle(`${options.loop.active ? (options.loop.loop_type === "queue" ? MusicOptionEmojis.queueLoop : MusicOptionEmojis.songLoop) : ""}${options.shuffle ? MusicOptionEmojis.shuffle : "▶️"} Playing ${details.title}`);
             embed.setURL(details.url);
@@ -173,6 +207,7 @@ class PlatinePlayer extends SubCommandClass_1.default {
                 const color = await (0, fast_average_color_node_1.getAverageColor)(thumbnailURL);
                 embed.setColor((0, colors_1.hex_to_int)(color.hex));
             }
+            onStateChanged("playing");
         }
         async function onStateChanged(state) {
             if (state === "pause") {
@@ -186,21 +221,29 @@ class PlatinePlayer extends SubCommandClass_1.default {
                 if (!platines)
                     return;
                 const { queue, active_track } = (await platines.settings).music;
-                const infos = await (0, tracks_1.fromQueueType)(queue[active_track]).then(t => (0, tracks_1.convertToYoutube)(t));
-                if (!infos)
+                const infos = await (0, tracks_1.fromQueueType)(queue[active_track]).then(t => converter.convertToYoutubeVideos(t)).then(r => r[0]);
+                if (!(infos instanceof play_dl_1.YouTubeVideo))
                     return destroyPlayer();
                 return onTrackChanged(infos, active_track);
             }
         }
-        let lastMessage = undefined;
+        const lastMessage = async () => {
+            const { settings: { player } } = await platines.settings;
+            if (!player)
+                return;
+            return this.lasido.channels.fetch(player.channel).then(channel => {
+                if (!channel?.isTextBased())
+                    return;
+                return channel.messages.fetch(player.message).then(m => m);
+            }).catch(() => undefined);
+        };
         const getComponents = () => this.getComponents(platines);
         async function destroyPlayer() {
-            if (lastMessage)
-                lastMessage.delete().catch(() => undefined);
+            (await lastMessage())?.delete().catch(() => undefined);
             interaction.deleteReply().catch(() => undefined);
             platines?.updateSettings(s => s.settings.player = undefined);
         }
-        async function editMessage() {
+        async function editMessage(recreateMessageIfStickMode) {
             const messageContent = {
                 content: "Please note that this command is in beta-test for now!",
                 embeds: [embed],
@@ -211,17 +254,22 @@ class PlatinePlayer extends SubCommandClass_1.default {
                 return destroyPlayer();
             const { settings } = await platines.settings;
             if (stick) {
-                if (!lastMessage)
-                    await interaction.editReply("The sticky player has been created.");
-                else if (lastMessage.id !== settings.player?.message)
+                const msg = await lastMessage();
+                if (!msg)
+                    await interaction.editReply("The sticky player has been created." + new Date().toString());
+                else if (msg.id !== settings.player?.message)
                     return destroyPlayer();
-                interaction.followUp(messageContent)?.then(async (message) => {
-                    if (lastMessage)
-                        lastMessage.fetch().then((m) => m.delete()).catch(() => undefined);
-                    await updateInteractionHandler(message);
-                    await updatePlayerMessage(message.id);
-                    lastMessage = message;
-                });
+                if (!msg || recreateMessageIfStickMode) {
+                    await msg?.delete().catch(() => undefined);
+                    interaction.followUp(messageContent)?.then(async (message) => {
+                        await updatePlayerMessage(message.id);
+                        await updateInteractionHandler(message);
+                    });
+                }
+                else
+                    msg?.edit(messageContent).then(async (message) => {
+                        await updateInteractionHandler(message);
+                    });
             }
             else
                 interaction.editReply(messageContent).then(async (message) => {
@@ -230,17 +278,17 @@ class PlatinePlayer extends SubCommandClass_1.default {
                     await updateInteractionHandler(message);
                 }).catch(() => destroyPlayer());
         }
-        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(editMessage) : undefined;
-        platines.on("trackChange", (video, id) => onTrackChanged(video, id).then(editMessage));
+        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(() => editMessage()) : undefined;
+        platines.on("trackChange", (video, id) => onTrackChanged(video, id).then(() => editMessage()));
         platines.on("queueChange", settingsUpdated);
         platines.on("shuffleChange", settingsUpdated);
         platines.on("loopChange", settingsUpdated);
-        platines.on("paused", () => onStateChanged("pause").then(editMessage));
-        platines.on("stop", () => onStateChanged("pause").then(editMessage));
-        platines.on("resumed", () => onStateChanged("playing").then(editMessage));
+        platines.on("paused", () => onStateChanged("pause").then(() => editMessage()));
+        platines.on("stop", () => onStateChanged("pause").then(() => editMessage()));
+        platines.on("resumed", () => onStateChanged("playing").then(() => editMessage()));
         platines.on("destroy", () => destroyPlayer());
-        this.lasido.on("playerUpdate", (guildId) => interaction.guildId === guildId ? editMessage() : undefined);
-        return onStateChanged(platines.status === "Playing" ? "playing" : "pause").then(editMessage);
+        this.lasido.on("playerUpdate", (guildId) => interaction.guildId === guildId ? editMessage(true) : undefined);
+        return onStateChanged(platines.status === "Playing" ? "playing" : "pause").then(() => editMessage());
     }
 }
 exports.default = PlatinePlayer;

@@ -2,13 +2,14 @@ import { ActionRowBuilder, ApplicationCommandOptionType, ButtonBuilder, ButtonIn
 import { Lasido } from "../../_main";
 import BotSubCommand from "../../types/SubCommandClass";
 import { Platines, getPlatines } from "../../utils/music/platines";
-import { convertToYoutube, fromQueueType, getVideoInfos } from "../../utils/music/tracks";
+import { fromQueueType } from "../../utils/music/tracks";
 import { getAverageColor } from "fast-average-color-node";
 import { hex_to_int } from "../../utils/colors";
 import { setLoop, setShuffle } from "../../utils/music/settings";
 import { YouTubeVideo } from "play-dl";
+import * as converter from "../../utils/music/converter";
 
-export const stickPlayersFooterMessage = "The player is in stick mode. All messages will be sent above it."
+export const stickPlayersFooterMessage = "The player is in stick mode. All messages in this channel go above this one."
 
 export default class PlatinePlayer extends BotSubCommand {
     constructor(lasido: Lasido) {
@@ -18,7 +19,12 @@ export default class PlatinePlayer extends BotSubCommand {
             options: [
                 {
                     name: "stick",
-                    description: "If you want the player to be sticked to the bottom of the chat.",
+                    description: "If you want the player to be sticked to the bottom of the chat (beta command: can be instable).",
+                    type: ApplicationCommandOptionType.Boolean
+                },
+                {
+                    name: "force",
+                    description: "If a player already exists, force to recreate a new player and delete the existing one.",
                     type: ApplicationCommandOptionType.Boolean
                 }
             ]
@@ -123,6 +129,7 @@ export default class PlatinePlayer extends BotSubCommand {
             content: "I must be connected to a voice channel to make that command working.",
             ephemeral: true
         })
+
         const { settings } = await platines.settings
         if(settings.player) {
             const { channel, message } = settings.player
@@ -130,10 +137,13 @@ export default class PlatinePlayer extends BotSubCommand {
                 if(!channel?.isTextBased()) return
                 return channel.messages.fetch(message).catch(() => undefined)
             }).catch(() => undefined)
-            if(playerMessage) return interaction.reply({
-                content: `Sorry, there is already a player in this guild.\n[Click to access it](${playerMessage.url})`,
-                ephemeral: true
-            })
+            if(playerMessage) {
+                if(!interaction.options.getBoolean("force")) return interaction.reply({
+                    content: `Sorry, there is already a player in this guild.\n[Click to access it](${playerMessage.url})`,
+                    ephemeral: true
+                })
+                else playerMessage.delete().catch(() => undefined);
+            }
         }
 
         const MusicOptionEmojis = {
@@ -177,7 +187,9 @@ export default class PlatinePlayer extends BotSubCommand {
             if(!platines) return
             const { options, queue } = (await platines.settings).music
 
-            const details = typeof video === "string" ? await getVideoInfos(video) : video
+            const details = video instanceof YouTubeVideo ? video : await (
+                converter.convertToYoutubeVideos(video).then(r => r[0] as YouTubeVideo)
+            )
             const author = await platines.lasido.users.fetch(queue[id].author)
             embed.setTitle(`${
                 options.loop.active ? (
@@ -199,6 +211,8 @@ export default class PlatinePlayer extends BotSubCommand {
                 const color = await getAverageColor(thumbnailURL)
                 embed.setColor(hex_to_int(color.hex))
             }
+
+            onStateChanged("playing")
         }
         async function onStateChanged(state: "pause" | "playing") {
             if(state === "pause") {
@@ -211,21 +225,28 @@ export default class PlatinePlayer extends BotSubCommand {
             }else {
                 if(!platines) return
                 const { queue, active_track } = (await platines.settings).music
-                const infos = await fromQueueType(queue[active_track]).then(t => convertToYoutube(t))
-                if(!infos) return destroyPlayer()
+                const infos = await fromQueueType(queue[active_track]).then(t => converter.convertToYoutubeVideos(t)).then(r => r[0])
+                if(!(infos instanceof YouTubeVideo)) return destroyPlayer()
                 return onTrackChanged(infos, active_track)
             }
         }
 
-        let lastMessage: Message | undefined = undefined;
+        const lastMessage = async () => {
+            const { settings: { player } } = await platines.settings
+            if(!player) return
+            return this.lasido.channels.fetch(player.channel).then(channel => {
+                if(!channel?.isTextBased()) return
+                return channel.messages.fetch(player.message).then(m => m)
+            }).catch(() => undefined)
+        }
         const getComponents = () => this.getComponents(platines)
         async function destroyPlayer() {
-            if(lastMessage) lastMessage.delete().catch(() => undefined)
+            (await lastMessage())?.delete().catch(() => undefined)
             interaction.deleteReply().catch(() => undefined)
             platines?.updateSettings(s => s.settings.player = undefined)
         }
-        async function editMessage() {
-            const messageContent: InteractionReplyOptions | MessageEditOptions = {
+        async function editMessage(recreateMessageIfStickMode?: boolean) {
+            const messageContent: InteractionReplyOptions & MessageEditOptions = {
                 content: "Please note that this command is in beta-test for now!",
                 embeds: [embed], 
                 components: await getComponents(),
@@ -236,15 +257,21 @@ export default class PlatinePlayer extends BotSubCommand {
             const { settings } = await platines.settings
             
             if(stick) {
-                if(!lastMessage) await interaction.editReply("The sticky player has been created.")
-                else if(lastMessage.id !== settings.player?.message) return destroyPlayer()
+                const msg = await lastMessage()
+                if(!msg) await interaction.editReply("The sticky player has been created." + new Date().toString())
+                else if(msg.id !== settings.player?.message) return destroyPlayer()
                 
-                interaction.followUp(messageContent)?.then(async (message) => {
-                    if(lastMessage) lastMessage.fetch().then((m) => m.delete()).catch(() => undefined)
+                if(!msg || recreateMessageIfStickMode) {
+                    await msg?.delete().catch(() => undefined)
+
+                    interaction.followUp(messageContent)?.then(async (message) => {
+                        await updatePlayerMessage(message.id)
+                        await updateInteractionHandler(message)
+                    })
+                }else msg?.edit(messageContent).then(async message => {
                     await updateInteractionHandler(message)
-                    await updatePlayerMessage(message.id)
-                    lastMessage= message
                 })
+                
             }else interaction.editReply(messageContent).then(async message => {
                 if(message.id !== settings.player?.message) return destroyPlayer()
                 
@@ -252,19 +279,19 @@ export default class PlatinePlayer extends BotSubCommand {
             }).catch(() => destroyPlayer())
         }
 
-        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(editMessage) : undefined
-        platines.on("trackChange", (video, id) => onTrackChanged(video, id).then(editMessage))
+        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(() => editMessage()) : undefined
+        platines.on("trackChange", (video, id) => onTrackChanged(video, id).then(() => editMessage()))
         platines.on("queueChange", settingsUpdated)
         platines.on("shuffleChange", settingsUpdated)
         platines.on("loopChange", settingsUpdated)
-        platines.on("paused", () => onStateChanged("pause").then(editMessage))
-        platines.on("stop", () => onStateChanged("pause").then(editMessage))
-        platines.on("resumed", () => onStateChanged("playing").then(editMessage))
+        platines.on("paused", () => onStateChanged("pause").then(() => editMessage()))
+        platines.on("stop", () => onStateChanged("pause").then(() => editMessage()))
+        platines.on("resumed", () => onStateChanged("playing").then(() => editMessage()))
         platines.on("destroy", () => destroyPlayer())
-        this.lasido.on("playerUpdate", (guildId) => interaction.guildId === guildId ? editMessage() : undefined)
+        this.lasido.on("playerUpdate", (guildId) => interaction.guildId === guildId ? editMessage(true) : undefined)
 
         return onStateChanged(
             platines.status === "Playing" ? "playing" : "pause"
-        ).then(editMessage)
+        ).then(() => editMessage())
     }
 }

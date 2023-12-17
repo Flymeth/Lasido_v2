@@ -2,10 +2,12 @@ import { ChatInputCommandInteraction, CacheType, EmbedBuilder } from "discord.js
 import { Lasido } from "../../_main";
 import BotSubCommand from "../../types/SubCommandClass";
 import { getPlatines } from "../../utils/music/platines";
-import { convertToYoutube, fromQueueType, getInfosEmbed, getVideoInfos } from "../../utils/music/tracks";
+import { fromQueueType, getInfosEmbed, getVideoInfos } from "../../utils/music/tracks";
 import { hex_to_int } from "../../utils/colors";
 import progress from "string-progressbar";
 import getTime from "../../utils/time";
+import * as converter from "../../utils/music/converter";
+import { YouTubeVideo } from "play-dl";
 
 export default class PlatineNowPlaying extends BotSubCommand {
     constructor(lasido: Lasido) {
@@ -29,8 +31,8 @@ export default class PlatineNowPlaying extends BotSubCommand {
 
         await interaction.deferReply()
 
-        const video_details = await fromQueueType(track).then(v => convertToYoutube(v))
-        if(!video_details) return interaction.editReply({content: "Oups... An error has come."})
+        const video_details = await fromQueueType(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0])
+        if(!(video_details instanceof YouTubeVideo)) return interaction.editReply({content: "Oups... An error has come."})
         
         const author = await this.lasido.users.fetch(track.author)
         const { playbackDuration } = ressource

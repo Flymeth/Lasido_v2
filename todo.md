@@ -1,4 +1,6 @@
-# ToDo
+# TODO AND BUGS
+
+## Requested Features
 
 - [x] Essayer de move sur MariaDB
 - [x] Pour l'embed par défaut d'une vidéo, trouver une lib pour faire la moyenne des couleurs de la miniature
@@ -10,3 +12,7 @@
 - Rajouter des `MessageEmbed` un peu partout pour rendre le bot plus joli
 - [x] Faire la presence du bot
 - Bonus: Rajouter les fonctionnalités de Lasido (playlist de favorie pour chaque utilisateur; copier/coller des playlist inter-serveurs; ...)
+
+## Known Bugs
+
+- [x] Lors d'un `/player stick=true`, lors d'un update l'ancien player ne se delete pas

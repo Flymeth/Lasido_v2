@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const EventClass_1 = __importDefault(require("../types/EventClass"));
 const voice_1 = require("../utils/music/voice");
+const settings_1 = require("../utils/settings");
 class BotIsReady extends EventClass_1.default {
     currentActivityIndex = -1;
     activities = [
@@ -40,6 +41,20 @@ class BotIsReady extends EventClass_1.default {
         this.changeActivity();
         const connectedVoiceChannel = this.lasido.channels.cache.filter(ch => ch.isVoiceBased() && ch.members.get(this.lasido.user?.id || ""));
         connectedVoiceChannel.forEach(ch => (0, voice_1.createVoice)(ch));
+        const guilds = await this.lasido.guilds.fetch().then(col => Array.from(col.values()));
+        for (const guild of guilds) {
+            const { settings: { player } } = await (0, settings_1.getSettings)(guild);
+            if (player) {
+                this.lasido.channels.fetch(player.channel).then(channel => {
+                    if (!channel?.isTextBased())
+                        return;
+                    channel.messages.fetch(player.message)
+                        .then(m => !m.delete())
+                        .catch(() => undefined);
+                }).catch(() => undefined);
+                (0, settings_1.updateSettings)(guild, (current) => current.settings.player = undefined);
+            }
+        }
     }
 }
 exports.default = BotIsReady;

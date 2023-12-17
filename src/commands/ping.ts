@@ -18,12 +18,16 @@ export default class PingCommand extends BotCommand {
             embeds: [
                 new EmbedBuilder({
                     title: "🏓 PONG!",
-                    description: `Latence: \`${this.lasido.ws.ping}ms\`\nUptime: \`${getTime(process.uptime() * 1000).toString()}\``,
+                    description: `${this.lasido.user?.toString()} version \`${this.lasido.package.version}\` by [Flymeth](https://flymeth.net)`,
                     color: hex_to_int(this.lasido.settings.colors.primary),
                     author: {
                         name: "Repository",
                         url: "https://github.com/Flymeth/Lasido_v2"
-                    }
+                    },
+                    fields: [
+                        {name: "Latence", value: `\`${this.lasido.ws.ping}ms\``, inline: true},
+                        {name: "Uptime", value: `\`${getTime(process.uptime() * 1000).toString()}\``, inline: true}
+                    ],
                 })
             ]
         })

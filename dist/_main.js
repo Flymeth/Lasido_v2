@@ -51,7 +51,8 @@ class Lasido extends discord_js_1.default.Client {
             return;
         console.log("[?] Starting command updatement");
         console.log("[?]> Deleting existing commands...");
-        for await (const [_, existingCommand] of this.application.commands.cache) {
+        const existingCommands = await this.application.commands.fetch();
+        for await (const existingCommand of Array.from(existingCommands.values())) {
             await this.application.commands.delete(existingCommand);
         }
         console.log("[?]> Registering commands...");
@@ -59,8 +60,8 @@ class Lasido extends discord_js_1.default.Client {
         const globalCommands = this.commands.filter(c => !c.guilded);
         await this.application.commands.set(globalCommands.map(c => c.command_informations));
         console.log("[?]> Global commands saved.");
-        const guilds = new Set(guildedCommands.map(c => c.guilded));
-        for await (const guild_id of guilds.values()) {
+        const guilds = Array.from(new Set(guildedCommands.map(c => c.guilded)));
+        for await (const guild_id of guilds) {
             const cmds = guildedCommands.filter(c => c.guilded === guild_id);
             await this.application.commands.set(cmds.map(c => c.command_informations), guild_id);
         }

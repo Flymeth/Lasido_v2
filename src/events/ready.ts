@@ -2,6 +2,7 @@ import { ActivitiesOptions, ActivityType, Collection, VoiceBasedChannel } from "
 import { Lasido } from "../_main";
 import BotEvent from "../types/EventClass";
 import { createVoice } from "../utils/music/voice";
+import { getSettings, updateSettings } from "../utils/settings";
 
 export default class BotIsReady extends BotEvent {
     private currentActivityIndex = -1
@@ -40,5 +41,20 @@ export default class BotIsReady extends BotEvent {
 
         const connectedVoiceChannel = this.lasido.channels.cache.filter(ch => ch.isVoiceBased() && ch.members.get(this.lasido.user?.id || "")) as Collection<string, VoiceBasedChannel>
         connectedVoiceChannel.forEach(ch => createVoice(ch))
+
+        const guilds = await this.lasido.guilds.fetch().then(col => Array.from(col.values()))
+        for(const guild of guilds) {
+            const {settings: { player }} = await getSettings(guild)
+            if(player) {
+                this.lasido.channels.fetch(player.channel).then(channel => {
+                    if(!channel?.isTextBased()) return;
+                    channel.messages.fetch(player.message)
+                        .then(m => !m.delete())
+                        .catch(() => undefined)
+                }).catch(() => undefined)
+
+                updateSettings(guild, (current) => current.settings.player = undefined)
+            }
+        }
     }
 }

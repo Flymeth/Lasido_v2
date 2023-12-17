@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -8,6 +31,8 @@ const platines_1 = require("../../utils/music/platines");
 const tracks_1 = require("../../utils/music/tracks");
 const string_progressbar_1 = __importDefault(require("string-progressbar"));
 const time_1 = __importDefault(require("../../utils/time"));
+const converter = __importStar(require("../../utils/music/converter"));
+const play_dl_1 = require("play-dl");
 class PlatineNowPlaying extends SubCommandClass_1.default {
     constructor(lasido) {
         super(lasido, {
@@ -31,8 +56,8 @@ class PlatineNowPlaying extends SubCommandClass_1.default {
         if (!ressource)
             return;
         await interaction.deferReply();
-        const video_details = await (0, tracks_1.fromQueueType)(track).then(v => (0, tracks_1.convertToYoutube)(v));
-        if (!video_details)
+        const video_details = await (0, tracks_1.fromQueueType)(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0]);
+        if (!(video_details instanceof play_dl_1.YouTubeVideo))
             return interaction.editReply({ content: "Oups... An error has come." });
         const author = await this.lasido.users.fetch(track.author);
         const { playbackDuration } = ressource;

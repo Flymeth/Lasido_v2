@@ -2,10 +2,11 @@ import { ApplicationCommandOptionType, ChatInputCommandInteraction, GuildMember 
 import { Lasido } from "../../_main";
 import BotSubCommand from "../../types/SubCommandClass";
 import play, { DeezerAlbum, DeezerPlaylist, DeezerTrack, SoundCloudPlaylist, SoundCloudTrack, SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, YouTubePlayList, YouTubeVideo } from "play-dl";
-import { convertToYoutube, getInfosEmbed, getVideoInfos } from "../../utils/music/tracks";
+import { getInfosEmbed } from "../../utils/music/tracks";
 import { getPlatines } from "../../utils/music/platines";
 import { createVoice, getVoice } from "../../utils/music/voice";
 import { getPlaylist } from "../../utils/music/playlists";
+import * as converter from "../../utils/music/converter"
 
 export default class PlatinesPlay extends BotSubCommand {
     constructor(lasido: Lasido) {
@@ -43,11 +44,13 @@ export default class PlatinesPlay extends BotSubCommand {
 
         const query = interaction.options.getString("query", true)
         const query_type = await play.validate(query)
-
+        
         const medias: (YouTubeVideo | SpotifyTrack | SoundCloudTrack | DeezerTrack)[] = [];
         switch (query_type) {
             case "yt_video": {
-                medias.push(await getVideoInfos(query))
+                medias.push(await (
+                    converter.convertToYoutubeVideos(query).then(r => r[0] as YouTubeVideo)
+                ))
                 break;
             }
             case "dz_track": {
@@ -95,18 +98,24 @@ export default class PlatinesPlay extends BotSubCommand {
 
         medias.forEach(m => {
             platines.addToQueue(interaction.user, m)
-            convertToYoutube(m)
+            converter.convertToYoutubeVideos(m)
+        })
+
+        // To avoid searching for the first media as it will not be used
+        if(medias.length > 1 && platines.status === "Playing") return interaction.followUp({
+            content: `${interaction.user.toString()} added ${medias.length} songs to queue.`,
         })
         
-        const firstMedia = await convertToYoutube(medias[0])
-        if(!firstMedia) return interaction.editReply({
+        const firstMedia = await converter.convertToYoutubeVideos(medias[0]).then(m => m[0])
+        if(!(firstMedia instanceof YouTubeVideo)) return interaction.editReply({
             content: "Oups... An error occured."
         })
         const embed = await getInfosEmbed(firstMedia)
 
         interaction.deleteReply().catch(() => undefined)
+
         if(platines.status !== "Playing") {
-            await platines.playTrack(0)
+            await platines.playTrack(-medias.length) // <- plays the first item of `media`
             
             return interaction.followUp({
                 content: `${interaction.user.toString()} started the player!`,

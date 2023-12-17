@@ -2,11 +2,12 @@ import { ChatInputCommandInteraction, CacheType, ApplicationCommandType, Guild, 
 import { Lasido } from "../../_main";
 import { getSettings } from "../../utils/settings";
 import playdl, { YouTubeVideo } from "play-dl";
-import { convertToYoutube, fromQueueType, getVideoInfos } from "../../utils/music/tracks";
+import { fromQueueType, getVideoInfos } from "../../utils/music/tracks";
 import { getPlatines } from "../../utils/music/platines";
 import BotSubCommand from "../../types/SubCommandClass";
 import { hex_to_int } from "../../utils/colors";
 import getTime from "../../utils/time";
+import * as converter from "../../utils/music/converter";
 
 export default class PlatineQueue extends BotSubCommand {
     constructor(lasido: Lasido) {
@@ -30,8 +31,8 @@ export default class PlatineQueue extends BotSubCommand {
         while(index < queue.length) {
             const matrixIndex = Math.floor(index / MAX_FIELDS_PER_EMBED)
             const infos = queue[index]
-            const video = await fromQueueType(infos).then(i => convertToYoutube(i))
-            if(!video) continue;
+            const video = await fromQueueType(infos).then(i => converter.convertToYoutubeVideos(i)).then(r => r[0])
+            if(!(video instanceof YouTubeVideo)) continue;
             const author = await this.lasido.users.fetch(infos.author)
             tracks[matrixIndex].push({ author, video })
             
@@ -99,7 +100,7 @@ export default class PlatineQueue extends BotSubCommand {
                     .setCustomId("current")
                     .setEmoji("🎵")
                     .setStyle(ButtonStyle.Success)
-                    .setDisabled(currentTrackPage === embedInformations.current)
+                    .setDisabled(currentTrackPage === embedInformations.current || platines?.status !== "Playing")
                 ;
                 row.setComponents(previousButton, hideButton, currentButton, nextButton)
             }else row.setComponents(previousButton, hideButton, nextButton)

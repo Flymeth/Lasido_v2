@@ -17,7 +17,7 @@ export async function getPlaylist(url: string | URL) {
             return playdl.soundcloud(url) as Promise<SoundCloudPlaylist>
         }
         case "yt_playlist": {
-            return playdl.playlist_info(url)
+            return playdl.playlist_info(url, { incomplete: true })
         }
         default:
             return null

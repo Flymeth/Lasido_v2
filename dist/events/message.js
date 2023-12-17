@@ -23,7 +23,7 @@ class BotMessageEvent extends EventClass_1.default {
                     if (!channel?.isTextBased())
                         return;
                     return channel.messages.fetch(player.message);
-                });
+                }).catch(() => undefined);
                 if (!message)
                     return (0, settings_1.updateSettings)(msg.guildId, (s) => s.settings.player = undefined);
                 if (message.channelId === channelId)

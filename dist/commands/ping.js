@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const CommandClass_1 = __importDefault(require("../types/CommandClass"));
 const discord_js_1 = require("discord.js");
 const colors_1 = require("../utils/colors");
+const time_1 = __importDefault(require("../utils/time"));
 class PingCommand extends CommandClass_1.default {
     constructor(lasido) {
         super(lasido, {
@@ -19,8 +20,16 @@ class PingCommand extends CommandClass_1.default {
             embeds: [
                 new discord_js_1.EmbedBuilder({
                     title: "🏓 PONG!",
-                    description: `Latence: \`${this.lasido.ws.ping}ms\``,
-                    color: (0, colors_1.hex_to_int)(this.lasido.settings.colors.primary)
+                    description: `${this.lasido.user?.toString()} version \`${this.lasido.package.version}\` by [Flymeth](https://flymeth.net)`,
+                    color: (0, colors_1.hex_to_int)(this.lasido.settings.colors.primary),
+                    author: {
+                        name: "Repository",
+                        url: "https://github.com/Flymeth/Lasido_v2"
+                    },
+                    fields: [
+                        { name: "Latence", value: `\`${this.lasido.ws.ping}ms\``, inline: true },
+                        { name: "Uptime", value: `\`${(0, time_1.default)(process.uptime() * 1000).toString()}\``, inline: true }
+                    ],
                 })
             ]
         });

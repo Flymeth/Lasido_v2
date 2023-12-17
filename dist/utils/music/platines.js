@@ -1,11 +1,36 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPlatines = exports.Platines = void 0;
 const voice_1 = require("./voice");
 const voice_2 = require("@discordjs/voice");
 const settings_1 = require("../settings");
 const tracks_1 = require("./tracks");
+const play_dl_1 = require("play-dl");
 const node_events_1 = require("node:events");
+const converter = __importStar(require("../../utils/music/converter"));
 const platines_cache = new Map();
 class Platines extends node_events_1.EventEmitter {
     connection;
@@ -47,8 +72,9 @@ class Platines extends node_events_1.EventEmitter {
             return false;
         return channel.send(message).catch(() => undefined);
     }
-    play(ressource) {
+    async play(ressource) {
         this.currentRessource = ressource;
+        this.currentRessource?.volume?.setVolume((await this.settings).music.options.volume);
         this.player.play(this.currentRessource);
     }
     async playTrack(id) {
@@ -61,8 +87,8 @@ class Platines extends node_events_1.EventEmitter {
             return false;
         }
         this.updateSettings((s) => s.music.active_track = id);
-        const infos = await (0, tracks_1.fromQueueType)(track).then(d => (0, tracks_1.convertToYoutube)(d));
-        if (!infos) {
+        const infos = await (0, tracks_1.fromQueueType)(track).then(d => converter.convertToYoutubeVideos(d)).then(r => r[0]);
+        if (!(infos instanceof play_dl_1.YouTubeVideo)) {
             console.error(`I did not found any youtube video for track with id <${track.src}:${track.id}>.`);
             return false;
         }
@@ -102,7 +128,8 @@ class Platines extends node_events_1.EventEmitter {
         return done;
     }
     stop(reason = "Error occured.") {
-        this.player.removeAllListeners(voice_2.AudioPlayerStatus.Idle);
+        this.removeAllListeners();
+        this.player.removeAllListeners();
         const done = this.player.stop(true);
         this.broadcast(`${reason}. The player stopped.`);
         this.currentRessource = undefined;

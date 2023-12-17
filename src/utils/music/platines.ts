@@ -3,10 +3,11 @@ import { Voice, destroyVoice, getVoice } from "./voice"
 import { AudioPlayerStatus, AudioResource, StreamType, createAudioResource, demuxProbe } from "@discordjs/voice"
 import { Lasido } from "../../_main"
 import { getSettings, updateSettings } from "../settings"
-import { convertToYoutube, fromQueueType, getInfosEmbed, newAudioResource, toQueueType } from "./tracks"
+import { fromQueueType, getInfosEmbed, newAudioResource, toQueueType } from "./tracks"
 import { DeezerTrack, SoundCloudTrack, SpotifyTrack, YouTubeVideo, yt_validate } from "play-dl"
 import GuildSettingJsonFile, { queueItem } from "../../../database/schema/guildSettings"
 import { EventEmitter } from "node:events";
+import * as converter from "../../utils/music/converter";
 
 const platines_cache = new Map<string, Platines>()
 
@@ -78,8 +79,9 @@ export class Platines extends EventEmitter {
     /**
      * Please avoid using this method (it does not update the track index)
      */
-    play(ressource: AudioResource) {
+    async play(ressource: AudioResource) {
         this.currentRessource= ressource
+        this.currentRessource?.volume?.setVolume((await this.settings).music.options.volume)
         this.player.play(this.currentRessource)
     }
     async playTrack(id: number) {
@@ -93,8 +95,8 @@ export class Platines extends EventEmitter {
         }
 
         this.updateSettings((s) => s.music.active_track= id)
-        const infos = await fromQueueType(track).then(d => convertToYoutube(d))
-        if(!infos) {
+        const infos = await fromQueueType(track).then(d => converter.convertToYoutubeVideos(d)).then(r => r[0])
+        if(!(infos instanceof YouTubeVideo)) {
             console.error(`I did not found any youtube video for track with id <${track.src}:${track.id}>.`)
             return false
         }

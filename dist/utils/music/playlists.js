@@ -22,7 +22,7 @@ async function getPlaylist(url) {
             return play_dl_1.default.soundcloud(url);
         }
         case "yt_playlist": {
-            return play_dl_1.default.playlist_info(url);
+            return play_dl_1.default.playlist_info(url, { incomplete: true });
         }
         default:
             return null;

@@ -17,6 +17,7 @@ const loop_1 = __importDefault(require("./platines/loop"));
 const jump_1 = __importDefault(require("./platines/jump"));
 const delete_1 = __importDefault(require("./platines/delete"));
 const clear_1 = __importDefault(require("./platines/clear"));
+const volume_1 = __importDefault(require("./platines/volume"));
 class BotPlatines extends CommandClass_1.BotCommandGroup {
     constructor(lasido) {
         super(lasido, {
@@ -26,7 +27,7 @@ class BotPlatines extends CommandClass_1.BotCommandGroup {
         }, [
             pause_resume_1.default, next_1.default, previous_1.default, nowplaying_1.default,
             play_1.default, queue_1.default, stop_1.default, shuffle_1.default, player_1.default,
-            loop_1.default, jump_1.default, delete_1.default, clear_1.default
+            loop_1.default, jump_1.default, delete_1.default, clear_1.default, volume_1.default
         ]);
     }
     async allowExecution(interaction, ...args) {

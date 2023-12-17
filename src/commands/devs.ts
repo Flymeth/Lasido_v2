@@ -4,23 +4,16 @@ import BotCommand, { BotCommandGroup } from "../types/CommandClass";
 import BotSubCommand from "../types/SubCommandClass";
 import DevsKillCommand from "./devs/kill";
 import owners from "../utils/owners";
+import DevsEvalCommand from "./devs/eval";
 
 export default class BotDevsCommands extends BotCommandGroup {
-    sub_commands: BotSubCommand[]
-
     constructor(lasido: Lasido) {
-        const sub_commands = [
-            DevsKillCommand
-        ].map(c => new c(lasido))
-
         super(lasido, {
             name: "devs",
             description: "Useful commands for the bot's developers",
         }, [
-            DevsKillCommand
+            DevsKillCommand, DevsEvalCommand
         ])
-
-        this.sub_commands = sub_commands
     }
 
     async allowExecution(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<boolean | undefined> {

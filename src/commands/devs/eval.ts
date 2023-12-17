@@ -29,7 +29,7 @@ export default class DevsEvalCommand extends BotSubCommand {
         }
 
         await interaction.editReply({
-            content: "```" + result + "```"
+            content: "```" + result.replaceAll("`", "\`") + "```"
         })
     }
 }

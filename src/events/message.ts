@@ -25,7 +25,7 @@ export default class BotMessageEvent extends BotEvent {
                 const message = await this.lasido.channels.fetch(player.channel).then(async (channel) => {
                     if(!channel?.isTextBased()) return
                     return channel.messages.fetch(player.message)
-                })
+                }).catch(() => undefined)
                 if(!message) return updateSettings(msg.guildId, (s) => s.settings.player= undefined)
                 if(message.channelId === channelId) return this.lasido.emit(`playerUpdate`, guildId)
             }
