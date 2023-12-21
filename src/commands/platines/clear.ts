@@ -49,7 +49,5 @@ export default class PlatinesClear extends BotSubCommand {
                 content: `${interaction.user.toString()} just deleted the queue!`
             })
         }
-
-        return interaction.editReply({content: "done!", components: []})
     }
 }

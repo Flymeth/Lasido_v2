@@ -2,7 +2,7 @@ import { ChatInputCommandInteraction, CacheType, ApplicationCommandType, Guild, 
 import { Lasido } from "../../_main";
 import { getSettings } from "../../utils/settings";
 import playdl, { YouTubeVideo } from "play-dl";
-import { fromQueueType, getVideoInfos } from "../../utils/music/tracks";
+import { fromQueueType } from "../../utils/music/tracks";
 import { getPlatines } from "../../utils/music/platines";
 import BotSubCommand from "../../types/SubCommandClass";
 import { hex_to_int } from "../../utils/colors";
@@ -22,22 +22,33 @@ export default class PlatineQueue extends BotSubCommand {
         const {music: { queue }} = await getSettings(interaction.guild)
         if(!queue.length) return interaction.reply({content: "The queue is empty for this guild. Start adding tracks with the `/platines play` command."})
         
-        await interaction.deferReply()
+        await interaction.reply({
+            content: "Acquiring queue's track..."
+        })
         const MAX_FIELDS_PER_EMBED = 10
         const tracks: {author: GuildMember | User, video: YouTubeVideo}[][] = new Array(Math.ceil(queue.length / MAX_FIELDS_PER_EMBED)).fill(undefined).map(() => [])
 
+        const user_cache = new Map<string, User>()
         let index = 0
         let totalTime = 0
+        let isValid = true
         while(index < queue.length) {
+            if(!isValid) return;
             const matrixIndex = Math.floor(index / MAX_FIELDS_PER_EMBED)
             const infos = queue[index]
-            const video = await fromQueueType(infos).then(i => converter.convertToYoutubeVideos(i)).then(r => r[0])
-            if(!(video instanceof YouTubeVideo)) continue;
-            const author = await this.lasido.users.fetch(infos.author)
+            const video = await fromQueueType(infos, true)
+            if(!user_cache.has(infos.author)) user_cache.set(infos.author, await this.lasido.users.fetch(infos.author))
+            const author = user_cache.get(infos.author) as User
             tracks[matrixIndex].push({ author, video })
             
             totalTime+= video.durationInSec
             index++
+
+            interaction.editReply({
+                content: `Please wait a moment... I'm getting informations about track \`${index}\` of \`${queue.length}\`...`
+            }).catch(() => {
+                isValid = false
+            })
         }
 
         const embedInformations = {

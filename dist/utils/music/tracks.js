@@ -68,16 +68,23 @@ async function toQueueType(track) {
     return { id, src: service };
 }
 exports.toQueueType = toQueueType;
-async function fromQueueType(infos) {
+async function fromQueueType(infos, convert) {
     const { id, src } = infos;
     switch (src) {
         case "dz": {
-            return play_dl_1.default.deezer(dzurl(id));
+            if (convert)
+                return converter.convertToYoutubeVideos(dzurl(id)).then(r => r[0]);
+            else
+                return play_dl_1.default.deezer(dzurl(id));
         }
         case "sp": {
+            if (convert)
+                return converter.convertToYoutubeVideos(spurl(id)).then(r => r[0]);
             return play_dl_1.default.spotify(spurl(id));
         }
         case "so": {
+            if (convert)
+                return converter.convertToYoutubeVideos(sourl(id)).then(r => r[0]);
             return play_dl_1.default.soundcloud(sourl(id));
         }
         case "yt": {

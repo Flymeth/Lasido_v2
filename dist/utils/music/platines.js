@@ -131,7 +131,7 @@ class Platines extends node_events_1.EventEmitter {
         this.removeAllListeners();
         this.player.removeAllListeners();
         const done = this.player.stop(true);
-        this.broadcast(`${reason}. The player stopped.`);
+        this.broadcast(`${reason} - The player stopped.`);
         this.currentRessource = undefined;
         this.updateSettings(s => s.music.active_track = -1);
         this.emit("stop");
@@ -148,7 +148,6 @@ class Platines extends node_events_1.EventEmitter {
     async skipTo(track_index) {
         if (track_index >= (await this.settings).music.queue.length)
             return false;
-        this.updateSettings((s) => s.music.active_track = track_index);
         this.emit("skipped", track_index);
         return this.playTrack(track_index);
     }

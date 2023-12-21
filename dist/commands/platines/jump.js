@@ -12,7 +12,7 @@ class PlatinesJump extends SubCommandClass_1.default {
             name: "jump",
             description: "Jump to a certain track",
             options: [
-                { name: "track-id", description: "The track index you want to be played", required: true, type: discord_js_1.ApplicationCommandOptionType.Integer }
+                { name: "track-id", description: "The track index you want to be played (set a nagative number to select from the queue's end)", required: true, type: discord_js_1.ApplicationCommandOptionType.Integer }
             ]
         });
     }
@@ -25,7 +25,13 @@ class PlatinesJump extends SubCommandClass_1.default {
                 content: "I must be connected to a voice channel to perform that command.",
                 ephemeral: true
             });
-        const index = interaction.options.getInteger("track-id", true) - 1;
+        const given_index = interaction.options.getInteger("track-id", true);
+        if (!given_index)
+            return interaction.reply({
+                content: "The index must be a stricly negative or positive number.",
+                ephemeral: true
+            });
+        const index = given_index < 0 ? given_index : given_index - 1;
         const done = await platines.skipTo(index);
         if (done)
             interaction.reply({

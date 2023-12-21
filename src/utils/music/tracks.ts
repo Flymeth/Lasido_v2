@@ -40,16 +40,24 @@ export async function toQueueType(track: string | URL | DeezerTrack | YouTubeVid
     if(!id) return null
     return { id, src: service }
 }
-export async function fromQueueType(infos: Omit<queueItem, "author">) {
+export async function fromQueueType<auto_convert extends boolean>(infos: Omit<queueItem, "author">, convert?: auto_convert): (
+    Promise<auto_convert extends true ? YouTubeVideo : (DeezerTrack | SpotifyTrack | SoundCloudTrack | YouTubeVideo)>
+) {
     const { id, src } = infos
     switch(src) {
         case "dz": {
-            return playdl.deezer(dzurl(id)) as Promise<DeezerTrack>
+            if(convert) return converter.convertToYoutubeVideos(dzurl(id)).then(r => r[0] as YouTubeVideo)
+            //@ts-ignore
+            else return playdl.deezer(dzurl(id)) as Promise<DeezerTrack>
         }
         case "sp": {
+            if(convert) return converter.convertToYoutubeVideos(spurl(id)).then(r => r[0] as YouTubeVideo)
+            //@ts-ignore
             return playdl.spotify(spurl(id)) as Promise<SpotifyTrack>
         }
         case "so": {
+            if(convert) return converter.convertToYoutubeVideos(sourl(id)).then(r => r[0] as YouTubeVideo)
+            //@ts-ignore
             return playdl.soundcloud(sourl(id)) as Promise<SoundCloudTrack>
         }
         case "yt": {

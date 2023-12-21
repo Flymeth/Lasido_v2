@@ -47,7 +47,6 @@ class PlatinesClear extends SubCommandClass_1.default {
                 content: `${interaction.user.toString()} just deleted the queue!`
             });
         }
-        return interaction.editReply({ content: "done!", components: [] });
     }
 }
 exports.default = PlatinesClear;
