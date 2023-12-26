@@ -16,14 +16,17 @@ export function getBDDKey(track: SpotifyTrack | DeezerTrack | SoundCloudTrack | 
     )
     return { service, id: getID(track.url) }
 }
-export function getYoutubeQuery(track: SpotifyTrack | DeezerTrack | SoundCloudTrack): string {
-    const title = "title" in track ? track.title : track.name
-    const artist= (
+export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundCloudTrack | YouTubeVideo, vendors = true): string {
+    const title = track instanceof YouTubeVideo ? track.title : (
+        track instanceof DeezerTrack ? track.shortTitle : track.name
+    )
+    const artist= track instanceof YouTubeVideo ? track.channel?.name : (
         "artist" in track ? track.artist.name :
         "artists" in track ? track.artists[0].name : track.user.name
-    )
+    ) || ""
 
-    return `Music ${title} by ${artist}`
+    if(vendors) return `Music ${title} by ${artist}`
+    else return `${artist} ${title}`
 }
 
 /**
@@ -153,7 +156,7 @@ export async function convertToYoutubeVideos(...tracks: (
             if(saved?.INFOS) {
                 return { init_index, data: new YouTubeVideo(saved.INFOS) }
             }else {
-                const query = getYoutubeQuery(track)
+                const query = getSearchQueryFrom(track)
                 const video = await playdl.search(query, { source: { youtube: "video" }, limit: 1 }).then(r => r[0])
                 saveToDB(video, track)
                 return { init_index, data: video }

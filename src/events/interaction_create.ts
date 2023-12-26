@@ -18,9 +18,11 @@ export default class UserInteraction extends BotEvent {
             }else {
                 if(!(command.mp || interaction.inGuild())) return interaction.reply({content: "Sorry, this command is not enabled in mp."})
                 command.execute(interaction, ...args).catch((err) => {
-                    console.error("------  [!]> LASIDO ERROR  ----------");
+                    console.error("------  [!]> LASIDO COMMAND ERROR  ----------");
                     console.error(err);
-                    console.error("-------------------------------------");
+                    console.error(`[COMMAND]>> ${command.command_informations.name} <<`);
+                    console.error(`[OPTIONS]>> ${JSON.stringify(interaction.options.data, undefined, 1)}`);
+                    console.error("---------------------------------------------");
                 })
             }
         }else return
