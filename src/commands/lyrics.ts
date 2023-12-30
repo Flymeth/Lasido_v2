@@ -25,6 +25,7 @@ export default class BotLyrics extends BotCommand {
     async execute(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<any> {
         if(!interaction.guild) return
         let search = interaction.options.getString("search")
+        const byQuery = !!search
         if(!search) {
             const platines = getPlatines(this.lasido, interaction.guild)
             if(platines?.status !== "Playing") return interaction.reply({
@@ -39,10 +40,15 @@ export default class BotLyrics extends BotCommand {
         interaction.deferReply()
 
         const geniusSong = await client.songs.search(search).then(songs => songs[0])
+        if(!geniusSong) return interaction.editReply({
+            content: 
+                "Sorry: I didn't found this song."
+                + (byQuery ? "\n> Maybe try with the 'search' argument ?" : "")
+        })
         
         const lyrics = await geniusSong.lyrics()
         if(!lyrics) return interaction.editReply({
-            content: "Sorry: I didn't find this song..."
+            content: "Sorry: This song seams to have no lyrics..."
         })
 
         const lyricsPartition: string[] = []
