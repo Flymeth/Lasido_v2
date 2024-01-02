@@ -36,7 +36,7 @@ export default class BotIsReady extends BotEvent {
     }
 
     async handle(...args: any[]): Promise<void> {
-        console.log(`[?] <${this.lasido.user?.username}> is ready to be used!`);
+        console.log(`[?] <${this.lasido.user?.username}> version [${this.lasido.package.version}] is ready to be used!`);
         this.changeActivity()
 
         const connectedVoiceChannel = this.lasido.channels.cache.filter(ch => ch.isVoiceBased() && ch.members.get(this.lasido.user?.id || "")) as Collection<string, VoiceBasedChannel>

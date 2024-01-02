@@ -1,5 +1,5 @@
 import playdl, {YouTubeVideo, SpotifyTrack, SoundCloudTrack, DeezerTrack, video_basic_info, yt_validate} from "play-dl"
-import { createAudioResource } from "@discordjs/voice"
+import { AudioResource, CreateAudioResourceOptions, createAudioResource } from "@discordjs/voice"
 import { EmbedBuilder } from "discord.js"
 import { getAverageColor } from "fast-average-color-node";
 import { hex_to_int } from "../colors";
@@ -86,9 +86,9 @@ export async function newAudioResource(track: string | URL | YouTubeVideo | Spot
     if(!src) return
     const stream = await playdl.stream(src, { discordPlayerCompatibility: true })
     return createAudioResource(stream.stream, {
-        inputType: stream.type,
         silencePaddingFrames: 0,
-        inlineVolume: true
+        inlineVolume: true,
+        inputType: stream.type,
     })
 }
 

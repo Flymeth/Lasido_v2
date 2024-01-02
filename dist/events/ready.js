@@ -37,7 +37,7 @@ class BotIsReady extends EventClass_1.default {
         setTimeout(() => this.changeActivity(), 10_000);
     }
     async handle(...args) {
-        console.log(`[?] <${this.lasido.user?.username}> is ready to be used!`);
+        console.log(`[?] <${this.lasido.user?.username}> version [${this.lasido.package.version}] is ready to be used!`);
         this.changeActivity();
         const connectedVoiceChannel = this.lasido.channels.cache.filter(ch => ch.isVoiceBased() && ch.members.get(this.lasido.user?.id || ""));
         connectedVoiceChannel.forEach(ch => (0, voice_1.createVoice)(ch));

@@ -1,7 +1,6 @@
 import { Lasido } from "../_main";
-import BotCommand, { BotCommandGroup } from "../types/CommandClass";
-import { ApplicationCommandOptionType, ApplicationCommandType, CacheType, ChatInputCommandInteraction, Guild, GuildMember } from "discord.js";
-import BotSubCommand from "../types/SubCommandClass";
+import { BotCommandGroup } from "../types/CommandClass";
+import { CacheType, ChatInputCommandInteraction, GuildMember } from "discord.js";
 import PlatinesPauseResume from "./platines/pause_resume";
 import PlatinesNext from "./platines/next";
 import PlatinesPrevious from "./platines/previous";
@@ -16,6 +15,8 @@ import PlatinesJump from "./platines/jump";
 import PlatinesDelete from "./platines/delete";
 import PlatinesClear from "./platines/clear";
 import PlatinesVolume from "./platines/volume";
+import PlatinesPlayFile from "./platines/playFile";
+import { getSettings, updateSettings } from "../utils/settings";
 
 export default class BotPlatines extends BotCommandGroup {
     constructor(lasido: Lasido) {
@@ -26,7 +27,8 @@ export default class BotPlatines extends BotCommandGroup {
         }, [
             PlatinesPauseResume, PlatinesNext, PlatinesPrevious, PlatineNowPlaying,
             PlatinesPlay, PlatineQueue, PlatinesStop, PlatineShuffle, PlatinePlayer,
-            PlatinesLoop, PlatinesJump, PlatinesDelete, PlatinesClear, PlatinesVolume
+            PlatinesLoop, PlatinesJump, PlatinesDelete, PlatinesClear, PlatinesVolume,
+            PlatinesPlayFile
         ])
     }
 
@@ -41,5 +43,14 @@ export default class BotPlatines extends BotCommandGroup {
             })
             return false
         }
+    }
+
+    async execute(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<any> {
+        if(!interaction.guild) return;
+        const { settings } = await getSettings(interaction.guild)
+
+        if(!settings.broadcast.channel) updateSettings(interaction.guild, c => c.settings.broadcast.channel = interaction.channelId)
+
+        super.execute(interaction, ...args)
     }
 }

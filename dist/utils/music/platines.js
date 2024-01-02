@@ -44,13 +44,6 @@ class Platines extends node_events_1.EventEmitter {
         this.player = voice.player;
         this.lasido = lasido;
         this.guild = guild;
-        const { Idle } = voice_2.AudioPlayerStatus;
-        if (!this.player.listeners(Idle).length) {
-            this.player.on(Idle, () => this.next());
-        }
-        this.on("volumeChange", async (_, value) => {
-            this.currentRessource?.volume?.setVolume(value);
-        });
     }
     destroy() {
         this.player.removeAllListeners(voice_2.AudioPlayerStatus.Idle);
@@ -72,10 +65,29 @@ class Platines extends node_events_1.EventEmitter {
             return false;
         return channel.send(message).catch(() => undefined);
     }
-    async play(ressource) {
-        this.currentRessource = ressource;
-        this.currentRessource?.volume?.setVolume((await this.settings).music.options.volume);
-        this.player.play(this.currentRessource);
+    async play(ressource, source = "streaming_provider") {
+        const { Idle } = voice_2.AudioPlayerStatus;
+        if (!this.player.listenerCount(Idle)) {
+            this.player.on(Idle, () => this.next());
+        }
+        if (!this.listenerCount("volumeChange")) {
+            this.on("volumeChange", async (_, value) => {
+                this.currentRessource?.ressource.volume?.setVolume(value);
+            });
+        }
+        if (!this.player.listenerCount("error")) {
+            const { stop } = this;
+            this.player.on("error", err => {
+                console.error(`An error with the current ressource:`);
+                console.log(err);
+                stop("Player just had a problem...");
+            });
+        }
+        this.currentRessource = {
+            ressource, source
+        };
+        this.currentRessource.ressource.volume?.setVolume((await this.settings).music.options.volume);
+        this.player.play(this.currentRessource.ressource);
     }
     async playTrack(id) {
         const { music } = await this.settings;
@@ -127,13 +139,14 @@ class Platines extends node_events_1.EventEmitter {
         this.emit("paused");
         return done;
     }
-    stop(reason = "Error occured.") {
+    stop(reason = "Error occured.", reset_active_track = true) {
         this.removeAllListeners();
         this.player.removeAllListeners();
         const done = this.player.stop(true);
-        this.broadcast(`${reason} - The player stopped.`);
+        this.broadcast(`${reason} - The player stopped.`, true);
         this.currentRessource = undefined;
-        this.updateSettings(s => s.music.active_track = -1);
+        if (reset_active_track)
+            this.updateSettings(s => s.music.active_track = -1);
         this.emit("stop");
         return done;
     }

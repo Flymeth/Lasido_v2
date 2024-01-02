@@ -18,6 +18,8 @@ const jump_1 = __importDefault(require("./platines/jump"));
 const delete_1 = __importDefault(require("./platines/delete"));
 const clear_1 = __importDefault(require("./platines/clear"));
 const volume_1 = __importDefault(require("./platines/volume"));
+const playFile_1 = __importDefault(require("./platines/playFile"));
+const settings_1 = require("../utils/settings");
 class BotPlatines extends CommandClass_1.BotCommandGroup {
     constructor(lasido) {
         super(lasido, {
@@ -27,7 +29,8 @@ class BotPlatines extends CommandClass_1.BotCommandGroup {
         }, [
             pause_resume_1.default, next_1.default, previous_1.default, nowplaying_1.default,
             play_1.default, queue_1.default, stop_1.default, shuffle_1.default, player_1.default,
-            loop_1.default, jump_1.default, delete_1.default, clear_1.default, volume_1.default
+            loop_1.default, jump_1.default, delete_1.default, clear_1.default, volume_1.default,
+            playFile_1.default
         ]);
     }
     async allowExecution(interaction, ...args) {
@@ -38,6 +41,14 @@ class BotPlatines extends CommandClass_1.BotCommandGroup {
             });
             return false;
         }
+    }
+    async execute(interaction, ...args) {
+        if (!interaction.guild)
+            return;
+        const { settings } = await (0, settings_1.getSettings)(interaction.guild);
+        if (!settings.broadcast.channel)
+            (0, settings_1.updateSettings)(interaction.guild, c => c.settings.broadcast.channel = interaction.channelId);
+        super.execute(interaction, ...args);
     }
 }
 exports.default = BotPlatines;

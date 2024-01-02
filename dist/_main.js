@@ -32,7 +32,7 @@ class Lasido extends discord_js_1.default.Client {
         const modules = await (0, dynamic_imports_1.rec_dyn_import)(commands_path);
         for (const mod of modules) {
             const command = new mod.default(this);
-            console.log(`[?] Command <${command.command_informations.name}> has been saved!`);
+            console.log(`[?] Command <${command.command_informations.name}> has been found!`);
             this.commands.push(command);
         }
     }
@@ -42,7 +42,7 @@ class Lasido extends discord_js_1.default.Client {
         const modules = await (0, dynamic_imports_1.rec_dyn_import)(events_path);
         for (const mod of modules) {
             const event = new mod.default(this);
-            console.log(`[?] Event <${event.id}> has been saved!`);
+            console.log(`[?] Event <${event.id}> has been found!`);
             this.events.push(event);
         }
     }

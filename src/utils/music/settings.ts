@@ -8,7 +8,7 @@ import { Platines } from "./platines";
  */
 export function setVolume(guild: BaseGuild | string, volume: number, platines?: Platines) {
     if(volume < 0 || volume > 2) return
-    platines?.currentRessource?.volume?.setVolume(volume)
+    platines?.currentRessource?.ressource.volume?.setVolume(volume)
     updateSettings(guild, s => {
         platines?.emit("volumeChange", s.music.options.volume, volume)
         s.music.options.volume = volume

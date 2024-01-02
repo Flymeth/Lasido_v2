@@ -5,7 +5,7 @@ const settings_1 = require("../settings");
 function setVolume(guild, volume, platines) {
     if (volume < 0 || volume > 2)
         return;
-    platines?.currentRessource?.volume?.setVolume(volume);
+    platines?.currentRessource?.ressource.volume?.setVolume(volume);
     (0, settings_1.updateSettings)(guild, s => {
         platines?.emit("volumeChange", s.music.options.volume, volume);
         s.music.options.volume = volume;

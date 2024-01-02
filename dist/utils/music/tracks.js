@@ -114,9 +114,9 @@ async function newAudioResource(track) {
         return;
     const stream = await play_dl_1.default.stream(src, { discordPlayerCompatibility: true });
     return (0, voice_1.createAudioResource)(stream.stream, {
-        inputType: stream.type,
         silencePaddingFrames: 0,
-        inlineVolume: true
+        inlineVolume: true,
+        inputType: stream.type,
     });
 }
 exports.newAudioResource = newAudioResource;

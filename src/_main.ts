@@ -32,7 +32,7 @@ export class Lasido extends Discord.Client {
         const modules = await rec_dyn_import<{default: typeof BotCommandType}>(commands_path)
         for(const mod of modules) {
             const command = new mod.default(this)
-            console.log(`[?] Command <${command.command_informations.name}> has been saved!`);
+            console.log(`[?] Command <${command.command_informations.name}> has been found!`);
             
             this.commands.push(command)
         }
@@ -43,7 +43,7 @@ export class Lasido extends Discord.Client {
         const modules = await rec_dyn_import<{default: typeof BotEventType}>(events_path)
         for(const mod of modules) {
             const event = new mod.default(this)
-            console.log(`[?] Event <${event.id}> has been saved!`);
+            console.log(`[?] Event <${event.id}> has been found!`);
             
             this.events.push(event)
         }
@@ -54,6 +54,7 @@ export class Lasido extends Discord.Client {
         console.log("[?] Starting command updatement");
         
         console.log("[?]> Deleting existing commands...");
+        // todo Use the "appCommand.equals()" to avoid deleting the commands that haven't changed.
         const existingCommands = await this.application.commands.fetch()
         for await(const existingCommand of Array.from(existingCommands.values())) {
             await this.application.commands.delete(existingCommand)

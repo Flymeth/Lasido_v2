@@ -13,7 +13,7 @@ export default class BotDevsCommands extends BotCommandGroup {
             description: "Useful commands for the bot's developers",
         }, [
             DevsKillCommand, DevsEvalCommand
-        ])
+        ], "825437050320584744")
     }
 
     async allowExecution(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<boolean | undefined> {

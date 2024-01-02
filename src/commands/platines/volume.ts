@@ -21,6 +21,11 @@ export default class PlatinesVolume extends BotSubCommand {
             content: "I must be connected to a voice channel to perform that command.",
             ephemeral: true
         })
+        if(platines.currentRessource?.source === "file") return interaction.reply({
+            content: "Sorry, cannot change the current ressource's volume on the fly because it comes from a user's file.",
+            ephemeral: true
+        })
+
         const value = interaction.options.getInteger("value", true)
         if(value < 1 || value > 200) return interaction.reply({
             content: "The volume value must be between 1 and 200 included!",

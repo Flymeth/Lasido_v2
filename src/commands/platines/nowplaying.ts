@@ -1,8 +1,8 @@
-import { ChatInputCommandInteraction, CacheType, EmbedBuilder } from "discord.js";
+import { ChatInputCommandInteraction, CacheType, EmbedBuilder, Attachment, Embed } from "discord.js";
 import { Lasido } from "../../_main";
 import BotSubCommand from "../../types/SubCommandClass";
 import { getPlatines } from "../../utils/music/platines";
-import { fromQueueType, getInfosEmbed, getVideoInfos } from "../../utils/music/tracks";
+import { fromQueueType, getInfosEmbed } from "../../utils/music/tracks";
 import { hex_to_int } from "../../utils/colors";
 import progress from "string-progressbar";
 import getTime from "../../utils/time";
@@ -26,30 +26,60 @@ export default class PlatineNowPlaying extends BotSubCommand {
         const {queue, active_track} = (await platines.settings).music
         const track = queue[active_track]
         if(!track) return
-        const ressource = platines.currentRessource
-        if(!ressource) return
-
+        const ressourceData = platines.currentRessource
+        if(!ressourceData) return
         await interaction.deferReply()
 
-        const video_details = await fromQueueType(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0])
-        if(!(video_details instanceof YouTubeVideo)) return interaction.editReply({content: "Oups... An error has come."})
-        
-        const author = await this.lasido.users.fetch(track.author)
-        const { playbackDuration } = ressource
-        const videoDuration = video_details.durationInSec * 1000
+        const { ressource, source } = ressourceData
+
+        let audioDuration: number | null;
+        let baseEmbed: EmbedBuilder;
+        switch (source) {
+            case "file": {
+                const file = ressource.metadata as Attachment
+                if(typeof file.duration === "number") audioDuration = file.duration * 1000
+                else audioDuration = null
+
+                baseEmbed = new EmbedBuilder({
+                    title: file.name,
+                    url: file.url,
+
+                    description: file.description || undefined,
+                    color: hex_to_int(this.lasido.settings.colors.primary)
+                })
+                break;
+            }
+            case "streaming_provider": {
+                const video_details = await fromQueueType(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0])
+                if(!(video_details instanceof YouTubeVideo)) return interaction.editReply({content: "Oups... An error has come."})
+                
+                audioDuration = video_details.durationInSec * 1000
+                baseEmbed = await getInfosEmbed(video_details)
+                break;
+            }
+            default: return interaction.editReply({
+                content: "Sorry. An error has come. (audio ressource has an invalid source)."
+            })
+        }
 
         const currentTimeChar = " 🪩 "
-        let progressbar = progress.splitBar(videoDuration, playbackDuration, 13, "➖", currentTimeChar)[0]
-        if(!progressbar.includes(currentTimeChar)) progressbar = currentTimeChar + progressbar.slice(1)
-        const embed = (await getInfosEmbed(video_details))
-        .addFields(
+        const { playbackDuration } = ressource
+        let progressbar = ""
+        if(typeof audioDuration === "number") {
+            progressbar = progress.splitBar(audioDuration, playbackDuration, 13, "➖", currentTimeChar)[0]
+            if(!progressbar.includes(currentTimeChar)) progressbar = currentTimeChar + progressbar.slice(1)
+        }
+
+        const author = await this.lasido.users.fetch(track.author)
+
+        baseEmbed.addFields(
             {name: "👻 Author", value: author.toString()},
-            {name: "⏲️ Time", value: `**${getTime(playbackDuration).toString()}** ` +  progressbar + ` *${getTime(videoDuration).toString()}*`},
+            {name: "⏲️ Time", value: `**${getTime(playbackDuration).toString()}** ` +  audioDuration ? (progressbar + ` *${getTime(audioDuration).toString()}*`) : ""},
         )
 
         interaction.editReply({
             content: "",
-            embeds: [embed]
+            embeds: [baseEmbed]
         })
     }
 }

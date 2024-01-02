@@ -26,9 +26,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const discord_js_1 = require("discord.js");
 const SubCommandClass_1 = __importDefault(require("../../types/SubCommandClass"));
 const platines_1 = require("../../utils/music/platines");
 const tracks_1 = require("../../utils/music/tracks");
+const colors_1 = require("../../utils/colors");
 const string_progressbar_1 = __importDefault(require("string-progressbar"));
 const time_1 = __importDefault(require("../../utils/time"));
 const converter = __importStar(require("../../utils/music/converter"));
@@ -52,25 +54,53 @@ class PlatineNowPlaying extends SubCommandClass_1.default {
         const track = queue[active_track];
         if (!track)
             return;
-        const ressource = platines.currentRessource;
-        if (!ressource)
+        const ressourceData = platines.currentRessource;
+        if (!ressourceData)
             return;
         await interaction.deferReply();
-        const video_details = await (0, tracks_1.fromQueueType)(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0]);
-        if (!(video_details instanceof play_dl_1.YouTubeVideo))
-            return interaction.editReply({ content: "Oups... An error has come." });
-        const author = await this.lasido.users.fetch(track.author);
-        const { playbackDuration } = ressource;
-        const videoDuration = video_details.durationInSec * 1000;
+        const { ressource, source } = ressourceData;
+        let audioDuration;
+        let baseEmbed;
+        switch (source) {
+            case "file": {
+                const file = ressource.metadata;
+                if (typeof file.duration === "number")
+                    audioDuration = file.duration * 1000;
+                else
+                    audioDuration = null;
+                baseEmbed = new discord_js_1.EmbedBuilder({
+                    title: file.name,
+                    url: file.url,
+                    description: file.description || undefined,
+                    color: (0, colors_1.hex_to_int)(this.lasido.settings.colors.primary)
+                });
+                break;
+            }
+            case "streaming_provider": {
+                const video_details = await (0, tracks_1.fromQueueType)(track).then(v => converter.convertToYoutubeVideos(v)).then(r => r[0]);
+                if (!(video_details instanceof play_dl_1.YouTubeVideo))
+                    return interaction.editReply({ content: "Oups... An error has come." });
+                audioDuration = video_details.durationInSec * 1000;
+                baseEmbed = await (0, tracks_1.getInfosEmbed)(video_details);
+                break;
+            }
+            default: return interaction.editReply({
+                content: "Sorry. An error has come. (audio ressource has an invalid source)."
+            });
+        }
         const currentTimeChar = " 🪩 ";
-        let progressbar = string_progressbar_1.default.splitBar(videoDuration, playbackDuration, 13, "➖", currentTimeChar)[0];
-        if (!progressbar.includes(currentTimeChar))
-            progressbar = currentTimeChar + progressbar.slice(1);
-        const embed = (await (0, tracks_1.getInfosEmbed)(video_details))
-            .addFields({ name: "👻 Author", value: author.toString() }, { name: "⏲️ Time", value: `**${(0, time_1.default)(playbackDuration).toString()}** ` + progressbar + ` *${(0, time_1.default)(videoDuration).toString()}*` });
+        const { playbackDuration } = ressource;
+        let progressbar = "";
+        if (typeof audioDuration === "number") {
+            progressbar = string_progressbar_1.default.splitBar(audioDuration, playbackDuration, 13, "➖", currentTimeChar)[0];
+            if (!progressbar.includes(currentTimeChar))
+                progressbar = currentTimeChar + progressbar.slice(1);
+        }
+        const author = await this.lasido.users.fetch(track.author);
+        baseEmbed.addFields({ name: "👻 Author", value: author.toString() }, { name: "⏲️ Time", value: `**${(0, time_1.default)(playbackDuration).toString()}** ` + audioDuration ? (progressbar + ` *${(0, time_1.default)(audioDuration).toString()}*`) : "" });
         interaction.editReply({
             content: "",
-            embeds: [embed]
+            embeds: [baseEmbed]
         });
     }
 }

@@ -9,9 +9,11 @@
   - [x] Ajouter les components
 - [x] Faire en sorte de pouvoir ajouter des playlists
 - Rajouter un setting pour mettre a jour l'activité du vocal selon la musique
-- Rajouter des `MessageEmbed` un peu partout pour rendre le bot plus joli
 - [x] Faire la presence du bot
-- Bonus: Rajouter les fonctionnalités de Lasido (playlist de favorie pour chaque utilisateur; copier/coller des playlist inter-serveurs; ...)
+- Bonus: Rajouter les fonctionnalités de Lasido
+  - playlist de favorie pour chaque utilisateur
+  - [x] copier/coller des playlist inter-serveurs
+  - [x] playfile
 
 ## Known Bugs
 

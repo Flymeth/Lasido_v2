@@ -7,7 +7,6 @@ import { getPlatines } from "../../utils/music/platines";
 import BotSubCommand from "../../types/SubCommandClass";
 import { hex_to_int } from "../../utils/colors";
 import getTime from "../../utils/time";
-import * as converter from "../../utils/music/converter";
 
 export default class PlatineQueue extends BotSubCommand {
     constructor(lasido: Lasido) {
