@@ -42,7 +42,7 @@ export default class ShareQueue extends BotCommand {
             const result = await updateSettings(interaction.guild, c => c.music.queue.push(...music.queue))
 
             return interaction.editReply({
-                content: `Successfuly added \`${music.queue.length}\` track(s) from \`${guild.name}\` to this server.\n> This server has now \`${result.music.queue}\` track(s) in its queue.`
+                content: `Successfuly added \`${music.queue.length}\` track(s) from \`${guild.name}\` to this server.\n> This server has now \`${result.music.queue.length}\` track(s) in its queue.`
             })
         }
     }
