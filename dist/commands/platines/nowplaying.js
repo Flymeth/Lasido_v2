@@ -97,7 +97,7 @@ class PlatineNowPlaying extends SubCommandClass_1.default {
                 progressbar = currentTimeChar + progressbar.slice(1);
         }
         const author = await this.lasido.users.fetch(track.author);
-        baseEmbed.addFields({ name: "👻 Author", value: author.toString() }, { name: "⏲️ Time", value: `**${(0, time_1.default)(playbackDuration).toString()}** ` + audioDuration ? (progressbar + ` *${(0, time_1.default)(audioDuration).toString()}*`) : "" });
+        baseEmbed.addFields({ name: "👻 Author", value: author.toString() }, { name: "⏲️ Time", value: `**${(0, time_1.default)(playbackDuration).toString()}** ` + (audioDuration ? (progressbar + ` *${(0, time_1.default)(audioDuration).toString()}*`) : "") });
         interaction.editReply({
             content: "",
             embeds: [baseEmbed]

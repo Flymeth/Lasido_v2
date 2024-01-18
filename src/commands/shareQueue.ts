@@ -1,7 +1,8 @@
-import { ApplicationCommandOptionType, CacheType, ChatInputCommandInteraction } from "discord.js"
+import { ApplicationCommandOptionType, CacheType, ChatInputCommandInteraction, EmbedBuilder } from "discord.js"
 import { Lasido } from "../_main"
 import { getSettings, updateSettings } from "../utils/settings"
 import BotCommand from "../types/CommandClass"
+import { hex_to_int } from "../utils/colors"
 
 export default class ShareQueue extends BotCommand {
     constructor(lasido: Lasido) {
@@ -19,8 +20,17 @@ export default class ShareQueue extends BotCommand {
         const importID = interaction.options.getString("import")
         if(!importID) { // Display the sharing embed
 
+            const embed = new EmbedBuilder({
+                title: "Here is your sharing code:",
+                description: "```"  + interaction.guild.id + "```",
+                footer: {
+                    text: "Note that I must be on both guild to share queues on each-others."
+                },
+                color: hex_to_int(this.lasido.settings.colors.primary)
+            })
             return interaction.reply({
-                content: `Here is your sharing code: \`${interaction.guild.id}\`.\n> Note that I must be on both guild to share queues on each-others.`
+                content: "",
+                embeds: [embed]
             })
 
         }else { // Import the queue

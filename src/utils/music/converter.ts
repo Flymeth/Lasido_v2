@@ -20,13 +20,13 @@ export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundClou
     const title = track instanceof YouTubeVideo ? track.title : (
         track instanceof DeezerTrack ? track.shortTitle : track.name
     )
-    const artist= track instanceof YouTubeVideo ? track.channel?.name : (
-        "artist" in track ? track.artist.name :
-        "artists" in track ? track.artists[0].name : track.user.name
-    ) || ""
+    const artists = track instanceof YouTubeVideo ? [track.channel?.name || ""] : (
+        "artist" in track ? [track.artist.name] :
+        "artists" in track ? track.artists.map(u => u.name) : [track.user.name]
+    )
 
-    if(vendors) return `Music ${title} by ${artist}`
-    else return `${artist} ${title}`
+    if(vendors) return `Music ${title} by ${artists.join(", ")}`
+    else return `${title} ${artists.join(" ")}`
 }
 
 /**

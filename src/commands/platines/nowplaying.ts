@@ -74,7 +74,7 @@ export default class PlatineNowPlaying extends BotSubCommand {
 
         baseEmbed.addFields(
             {name: "👻 Author", value: author.toString()},
-            {name: "⏲️ Time", value: `**${getTime(playbackDuration).toString()}** ` +  audioDuration ? (progressbar + ` *${getTime(audioDuration).toString()}*`) : ""},
+            {name: "⏲️ Time", value: `**${getTime(playbackDuration).toString()}** ` +  (audioDuration ? (progressbar + ` *${getTime(audioDuration).toString()}*`) : "")},
         )
 
         interaction.editReply({
