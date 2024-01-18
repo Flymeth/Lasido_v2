@@ -21,11 +21,9 @@ export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundClou
         track instanceof DeezerTrack ? track.shortTitle : track.name
     )
     const artists = track instanceof YouTubeVideo ? [track.channel?.name || ""] : (
+        "contributors" in track && track.contributors ? track.contributors?.map(u => u.name) :
         "artist" in track ? [track.artist.name] :
         "artists" in track ? track.artists.map(u => u.name) : [track.user.name]
-    )
-    if("contributors" in track && track.contributors?.length) artists.push(
-        ...track.contributors.map(u => u.name)
     )
 
     if(vendors) return `Music ${title} by ${artists.join(", ")}`

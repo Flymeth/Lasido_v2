@@ -88,6 +88,7 @@ export default class PingCommand extends BotCommand {
                 ("title" in result || result instanceof YouTubeVideo ? result.title : result.name)
                 || null
             )
+            .setDescription(`Query: \`${query}\``)
             .setImage(imageURL || null)
             .setColor(imageURL ? hex_to_int((await getAverageColor(imageURL)).hex) : "Random")
             .setAuthor(artist)
