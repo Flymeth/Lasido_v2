@@ -24,6 +24,9 @@ export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundClou
         "artist" in track ? [track.artist.name] :
         "artists" in track ? track.artists.map(u => u.name) : [track.user.name]
     )
+    if("contributors" in track && track.contributors?.length) artists.push(
+        ...track.contributors.map(u => u.name)
+    )
 
     if(vendors) return `Music ${title} by ${artists.join(", ")}`
     else return `${title} ${artists.join(" ")}`
