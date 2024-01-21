@@ -78,12 +78,11 @@ export default class PingCommand extends BotCommand {
             "artists" in result ? {
                 name: result.artists.map(a => a.name).join(", "),
                 url: result.artists[0].url
-            } : {
-                name: "Unknown artist"
-            }
+            } : null
         )
+        const url = result instanceof SoundCloudTrack ? result.permalink : result.url
         const embed = new EmbedBuilder()
-            .setURL(result.url)
+            .setURL(url)
             .setTitle(
                 ("title" in result || result instanceof YouTubeVideo ? result.title : result.name)
                 || null
@@ -100,7 +99,7 @@ export default class PingCommand extends BotCommand {
                 },
                 {
                     name: `Result (${target}'s link)`,
-                    value: `**${result.url} **`
+                    value: `**${url} **`
                 }
             )
             .setFooter({

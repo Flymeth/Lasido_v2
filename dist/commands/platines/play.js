@@ -130,16 +130,19 @@ class PlatinesPlay extends SubCommandClass_1.default {
                 content: "Oups... An error occured."
             });
         const embed = await (0, tracks_1.getInfosEmbed)(firstMedia);
+        embed.setFooter({
+            text: "Use '/platines play' to do the same!"
+        });
         interaction.deleteReply().catch(() => undefined);
         if (platines.status !== "Playing") {
             await platines.playTrack(-medias.length);
-            return interaction.followUp({
+            return interaction.channel?.send({
                 content: `${interaction.user.toString()} started the player!`,
                 embeds: [embed]
             });
         }
         else
-            return interaction.followUp({
+            return interaction.channel?.send({
                 content: `${interaction.user.toString()} added a song to queue.`,
                 embeds: [embed]
             });

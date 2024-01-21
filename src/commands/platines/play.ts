@@ -111,18 +111,20 @@ export default class PlatinesPlay extends BotSubCommand {
             content: "Oups... An error occured."
         })
         const embed = await getInfosEmbed(firstMedia)
-
+        embed.setFooter({
+            text: "Use '/platines play' to do the same!"
+        })
         interaction.deleteReply().catch(() => undefined)
 
         if(platines.status !== "Playing") {
             await platines.playTrack(-medias.length) // <- plays the first item of `media`
             
-            return interaction.followUp({
+            return interaction.channel?.send({
                 content: `${interaction.user.toString()} started the player!`,
                 embeds: [embed]
             })
         }
-        else return interaction.followUp({
+        else return interaction.channel?.send({
             content: `${interaction.user.toString()} added a song to queue.`,
             embeds: [embed]
         })
