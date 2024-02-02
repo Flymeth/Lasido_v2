@@ -11,7 +11,7 @@ export async function setTokens() {
             client_id: process.env.SPOTIFY_CLIENT || "",
             client_secret: process.env.SPOTIFY_SECRET || "",
             refresh_token: process.env.SPOTIFY_REFRESH || "",
-            market: "FR"
+            market: "US"
         }
     })
 }

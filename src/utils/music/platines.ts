@@ -3,7 +3,7 @@ import { Voice, destroyVoice, getVoice } from "./voice"
 import { AudioPlayerStatus, AudioResource, StreamType, createAudioResource, demuxProbe } from "@discordjs/voice"
 import { Lasido } from "../../_main"
 import { getSettings, updateSettings } from "../settings"
-import { fromQueueType, getInfosEmbed, newAudioResource, toQueueType } from "./tracks"
+import { LasidoAudioRessource, fromQueueType, getInfosEmbed, newAudioResource, toQueueType } from "./tracks"
 import { DeezerTrack, SoundCloudTrack, SpotifyTrack, YouTubeVideo, yt_validate } from "play-dl"
 import GuildSettingJsonFile, { queueItem } from "../../../database/schema/guildSettings"
 import { EventEmitter } from "node:events";
@@ -37,7 +37,7 @@ export class Platines extends EventEmitter {
     lasido: Lasido
     guild: Guild
     currentRessource?: {
-        ressource: AudioResource,
+        ressource: LasidoAudioRessource,
         source: ressourceSource
     }
 
@@ -75,7 +75,7 @@ export class Platines extends EventEmitter {
     /**
      * Please avoid using this method (it does not update the track index)
      */
-    async play(ressource: AudioResource, source: ressourceSource = "streaming_provider") {
+    async play(ressource: LasidoAudioRessource, source: ressourceSource = "streaming_provider") {
         // Settings up the required events
         const { Idle } = AudioPlayerStatus
         if(!this.player.listenerCount(Idle)) {

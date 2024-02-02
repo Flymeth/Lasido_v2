@@ -1,6 +1,6 @@
 import playdl, {YouTubeVideo, SpotifyTrack, SoundCloudTrack, DeezerTrack, video_basic_info, yt_validate} from "play-dl"
 import { AudioResource, CreateAudioResourceOptions, createAudioResource } from "@discordjs/voice"
-import { EmbedBuilder } from "discord.js"
+import { Attachment, EmbedBuilder } from "discord.js"
 import { getAverageColor } from "fast-average-color-node";
 import { hex_to_int } from "../colors";
 import { queueItem } from "../../../database/schema/guildSettings";
@@ -68,7 +68,11 @@ export async function fromQueueType<auto_convert extends boolean>(infos: Omit<qu
     }
 }
 
-export async function newAudioResource(track: string | URL | YouTubeVideo | SpotifyTrack | SoundCloudTrack | DeezerTrack) {
+export type LasidoAudioRessource = AudioResource<{
+    // eq?: EqualizerStream,
+    file?: Attachment
+}>
+export async function newAudioResource(track: string | URL | YouTubeVideo | SpotifyTrack | SoundCloudTrack | DeezerTrack): Promise<LasidoAudioRessource | undefined> {
     let src: string | undefined;
 
     if(track instanceof YouTubeVideo) {
@@ -85,10 +89,12 @@ export async function newAudioResource(track: string | URL | YouTubeVideo | Spot
 
     if(!src) return
     const stream = await playdl.stream(src, { discordPlayerCompatibility: true })
+    
     return createAudioResource(stream.stream, {
         silencePaddingFrames: 0,
         inlineVolume: true,
         inputType: stream.type,
+        metadata: {}
     })
 }
 

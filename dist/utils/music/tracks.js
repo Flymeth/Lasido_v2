@@ -117,6 +117,7 @@ async function newAudioResource(track) {
         silencePaddingFrames: 0,
         inlineVolume: true,
         inputType: stream.type,
+        metadata: {}
     });
 }
 exports.newAudioResource = newAudioResource;

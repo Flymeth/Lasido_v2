@@ -21,24 +21,22 @@ export default class PlatinesPlay extends BotSubCommand {
 
     async execute(interaction: ChatInputCommandInteraction, ...args: any[]): Promise<any> {
         if(!interaction.guild) return
+        await interaction.deferReply({ ephemeral: true })
 
         if(!getVoice(interaction.guild)) {
             const member = interaction.member as GuildMember
 
             const channel= member.voice.channel
-            if(!channel) return interaction.reply({
+            if(!channel) return interaction.editReply({
                 content: "You must be connected to a guild's voice channel to do this command.",
-                ephemeral: true
             })
-            if(!channel.joinable) return interaction.reply({
+            if(!channel.joinable) return interaction.editReply({
                 content: "This channel is unreachable for me.",
-                ephemeral: true
             })
 
             createVoice(channel)
         }
         
-        await interaction.deferReply({ephemeral: true})
         const platines = getPlatines(this.lasido, interaction.guild)
         if(!platines) return;
 

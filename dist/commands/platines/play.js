@@ -47,22 +47,20 @@ class PlatinesPlay extends SubCommandClass_1.default {
     async execute(interaction, ...args) {
         if (!interaction.guild)
             return;
+        await interaction.deferReply({ ephemeral: true });
         if (!(0, voice_1.getVoice)(interaction.guild)) {
             const member = interaction.member;
             const channel = member.voice.channel;
             if (!channel)
-                return interaction.reply({
+                return interaction.editReply({
                     content: "You must be connected to a guild's voice channel to do this command.",
-                    ephemeral: true
                 });
             if (!channel.joinable)
-                return interaction.reply({
+                return interaction.editReply({
                     content: "This channel is unreachable for me.",
-                    ephemeral: true
                 });
             (0, voice_1.createVoice)(channel);
         }
-        await interaction.deferReply({ ephemeral: true });
         const platines = (0, platines_1.getPlatines)(this.lasido, interaction.guild);
         if (!platines)
             return;

@@ -23,6 +23,10 @@ class UserInteraction extends EventClass_1.default {
                     console.error(`[COMMAND]>> ${command.command_informations.name} <<`);
                     console.error(`[OPTIONS]>> ${JSON.stringify(interaction.options.data, undefined, 1)}`);
                     console.error("---------------------------------------------");
+                    const content = "An error occured. Please contact the owner to report that error.";
+                    interaction.fetchReply()
+                        .then(() => interaction.editReply({ content }))
+                        .catch(() => interaction.reply({ content, ephemeral: true }));
                 });
             }
         }

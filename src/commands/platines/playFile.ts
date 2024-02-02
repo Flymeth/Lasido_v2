@@ -42,8 +42,9 @@ export default class PlatinesPlayFile extends BotSubCommand {
             content: "This file is not in a valid format. Please give to this command an audio file."
         })
 
+        
         const ressource = createAudioResource(file.url, {
-            metadata: file,
+            metadata: { file },
         })
         const platines = getPlatines(this.lasido, interaction.guild)
         if(!platines) return
