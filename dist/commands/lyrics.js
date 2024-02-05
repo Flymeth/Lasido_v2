@@ -32,6 +32,7 @@ const platines_1 = require("../utils/music/platines");
 const tracks_1 = require("../utils/music/tracks");
 const colors_1 = require("../utils/colors");
 const genious = __importStar(require("genius-lyrics"));
+const converter_1 = require("../utils/music/converter");
 const client = new genious.Client();
 class BotLyrics extends CommandClass_1.default {
     constructor(lasido) {
@@ -61,7 +62,7 @@ class BotLyrics extends CommandClass_1.default {
                 });
             const { queue, active_track } = (await platines.settings).music;
             const track_details = await (0, tracks_1.fromQueueType)(queue[active_track]);
-            search = `${"name" in track_details ? track_details.name : track_details.title}`;
+            search = (0, converter_1.getSearchQueryFrom)(track_details, false);
         }
         interaction.deferReply();
         const geniusSong = await client.songs.search(search).then(songs => songs[0]);

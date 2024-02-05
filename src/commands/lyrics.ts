@@ -5,6 +5,7 @@ import { getPlatines } from "../utils/music/platines";
 import { fromQueueType } from "../utils/music/tracks";
 import { hex_to_int } from "../utils/colors";
 import * as genious from "genius-lyrics";
+import { getSearchQueryFrom } from "../utils/music/converter";
 const client = new genious.Client()
 
 export default class BotLyrics extends BotCommand {
@@ -35,7 +36,7 @@ export default class BotLyrics extends BotCommand {
             const { queue, active_track } = (await platines.settings).music
             const track_details = await fromQueueType(queue[active_track])
 
-            search = `${"name" in track_details ? track_details.name : track_details.title}`
+            search = getSearchQueryFrom(track_details, false)
         }
         interaction.deferReply()
 

@@ -38,7 +38,7 @@ export default class PlatinesPlayFile extends BotSubCommand {
         await interaction.deferReply({ephemeral: true})
         
         const file = interaction.options.getAttachment("file", true)
-        if(typeof file.duration === "number") return interaction.editReply({
+        if(!file.contentType?.startsWith("audio")) return interaction.editReply({
             content: "This file is not in a valid format. Please give to this command an audio file."
         })
 
