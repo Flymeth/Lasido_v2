@@ -23,9 +23,9 @@ export default class DevsEvalCommand extends BotSubCommand {
         try {
             const answer = eval(code)
             if(typeof answer === "object") result = JSON.stringify(answer)
-            else result = answer.toString()
+            else result = "" + answer
         } catch (error: any) {
-            result = error.toString()
+            result = "" + error
         }
 
         await interaction.editReply({

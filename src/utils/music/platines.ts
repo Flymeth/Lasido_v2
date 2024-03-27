@@ -201,7 +201,10 @@ export class Platines extends EventEmitter {
             return done
         }
 
-        let next_track_index = active_track + 1
+        let next_track_index = active_track
+        if(!loop.active) this.remFromQueue(active_track)
+        else next_track_index++
+
         if(next_track_index >= queue.length) {
             next_track_index= 0
 
@@ -225,7 +228,10 @@ export class Platines extends EventEmitter {
             return done
         }
 
-        let previous_track_index = active_track - 1
+        let previous_track_index = active_track
+        if(!loop.active) this.remFromQueue(active_track)
+        else previous_track_index--
+
         if(previous_track_index < 0) {
             previous_track_index= queue.length -1
 
@@ -256,8 +262,6 @@ export class Platines extends EventEmitter {
         this.updateSettings((s) => s.music.queue.splice(index, 1))
         this.emit("queueChange")
         this.emit("queueRemove", item)
-
-        if(index === (await this.settings).music.active_track && this.status === "Playing") return this.next()
     }
 
     on<E extends keyof PlatinesEvents>(eventName: E, listener: PlatinesEvents[E]) {

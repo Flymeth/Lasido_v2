@@ -34,8 +34,12 @@ class PlatinesDelete extends SubCommandClass_1.default {
                 });
         }
         else {
-            const id = (index ?? (await platines.settings).music.active_track + 1) - 1;
+            const { active_track } = (await platines.settings).music;
+            const id = (index ?? active_track + 1) - 1;
             platines.remFromQueue(id);
+            if (index === active_track
+                && platines.status === "Playing")
+                platines.next();
         }
         return interaction.reply({ content: "done!" });
     }
