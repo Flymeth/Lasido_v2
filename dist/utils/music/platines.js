@@ -49,8 +49,8 @@ class Platines extends node_events_1.EventEmitter {
         this.player.removeAllListeners(voice_2.AudioPlayerStatus.Idle);
         platines_cache.delete(this.guild.id);
         (0, voice_1.destroyVoice)(this.guild);
-        this.emit("destroy");
-        this.removeAllListeners();
+        this?.emit("destroy");
+        this?.removeAllListeners();
     }
     get settings() {
         return (0, settings_1.getSettings)(this.guild);
@@ -187,11 +187,14 @@ class Platines extends node_events_1.EventEmitter {
             return done;
         }
         let next_track_index = active_track;
-        if (!loop.active)
-            this.remFromQueue(active_track);
+        let queue_length = queue.length;
+        if (!loop.active) {
+            await this.remFromQueue(active_track);
+            queue_length--;
+        }
         else
             next_track_index++;
-        if (next_track_index >= queue.length) {
+        if (next_track_index >= queue_length) {
             next_track_index = 0;
             if (!loop.active)
                 return this.stop("Reached the queue's end");
@@ -212,11 +215,9 @@ class Platines extends node_events_1.EventEmitter {
             this.emit("nexted");
             return done;
         }
-        let previous_track_index = active_track;
+        let previous_track_index = active_track - 1;
         if (!loop.active)
-            this.remFromQueue(active_track);
-        else
-            previous_track_index--;
+            await this.remFromQueue(active_track);
         if (previous_track_index < 0) {
             previous_track_index = queue.length - 1;
             if (!loop.active)

@@ -80,7 +80,7 @@ class BotLyrics extends CommandClass_1.default {
         const MAX_EMBED_DESCRIPTION_SIZE = 4090;
         while (MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length < lyrics.length) {
             const boundaries = [MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length, MAX_EMBED_DESCRIPTION_SIZE * (lyricsPartition.length + 1)];
-            lyricsPartition.push(lyricsPartition.length ? "...\n" : ""
+            lyricsPartition.push((lyricsPartition.length ? "\n" : "")
                 + lyrics.slice(...boundaries)
                 + (boundaries[1] <= lyrics.length ? "\n..." : ""));
         }
@@ -91,12 +91,14 @@ class BotLyrics extends CommandClass_1.default {
             name: `${geniusSong.title} by ${geniusSong.artist.name}`,
             url: geniusSong.url,
             iconURL: geniusSong.artist.image
-        })
-            .setImage(geniusSong.image);
-        return interaction.editReply({
-            content: "",
-            embeds
         });
+        embeds.at(-1)?.setImage(geniusSong.image);
+        return interaction.editReply({
+            content: "Voici les paroles demandées",
+        }).then(i => embeds.forEach(e => interaction.followUp({
+            content: "",
+            embeds: [e]
+        })));
     }
 }
 exports.default = BotLyrics;

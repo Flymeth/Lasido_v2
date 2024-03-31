@@ -56,8 +56,9 @@ export default class BotLyrics extends BotCommand {
         const MAX_EMBED_DESCRIPTION_SIZE = 4090 // I know it's 4096 but your mf
         while(MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length < lyrics.length) {
             const boundaries = [MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length, MAX_EMBED_DESCRIPTION_SIZE * (lyricsPartition.length + 1)]
+            
             lyricsPartition.push(
-                lyricsPartition.length ? "...\n" : ""
+                (lyricsPartition.length ? "\n" : "")
                 + lyrics.slice(...boundaries)
                 + (boundaries[1] <= lyrics.length ? "\n..." : "")
             )
@@ -73,11 +74,13 @@ export default class BotLyrics extends BotCommand {
             url: geniusSong.url,
             iconURL: geniusSong.artist.image
         })
-        .setImage(geniusSong.image)
+        embeds.at(-1)?.setImage(geniusSong.image)
         
         return interaction.editReply({
+            content: "Voici les paroles demandées",
+        }).then(i => embeds.forEach(e => interaction.followUp({
             content: "",
-            embeds
-        })
+            embeds: [e]
+        })))
     }
 }
