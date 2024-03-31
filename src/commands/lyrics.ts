@@ -38,7 +38,7 @@ export default class BotLyrics extends BotCommand {
 
             search = getSearchQueryFrom(track_details, false)
         }
-        interaction.deferReply()
+        await interaction.deferReply()
 
         const geniusSong = await client.songs.search(search).then(songs => songs[0])
         if(!geniusSong) return interaction.editReply({

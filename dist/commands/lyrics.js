@@ -64,7 +64,7 @@ class BotLyrics extends CommandClass_1.default {
             const track_details = await (0, tracks_1.fromQueueType)(queue[active_track]);
             search = (0, converter_1.getSearchQueryFrom)(track_details, false);
         }
-        interaction.deferReply();
+        await interaction.deferReply();
         const geniusSong = await client.songs.search(search).then(songs => songs[0]);
         if (!geniusSong)
             return interaction.editReply({
