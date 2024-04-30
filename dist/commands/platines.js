@@ -9,7 +9,6 @@ const next_1 = __importDefault(require("./platines/next"));
 const previous_1 = __importDefault(require("./platines/previous"));
 const nowplaying_1 = __importDefault(require("./platines/nowplaying"));
 const play_1 = __importDefault(require("./platines/play"));
-const queue_1 = __importDefault(require("./platines/queue"));
 const stop_1 = __importDefault(require("./platines/stop"));
 const shuffle_1 = __importDefault(require("./platines/shuffle"));
 const player_1 = __importDefault(require("./platines/player"));
@@ -28,7 +27,7 @@ class BotPlatines extends CommandClass_1.BotCommandGroup {
             dmPermission: false
         }, [
             pause_resume_1.default, next_1.default, previous_1.default, nowplaying_1.default,
-            play_1.default, queue_1.default, stop_1.default, shuffle_1.default, player_1.default,
+            play_1.default, stop_1.default, shuffle_1.default, player_1.default,
             loop_1.default, jump_1.default, delete_1.default, clear_1.default, volume_1.default,
             playFile_1.default
         ]);

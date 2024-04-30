@@ -14,7 +14,8 @@ export default class PlatinesPlay extends BotSubCommand {
             name: "play",
             description: "Play music",
             options: [
-                {name: "query", description: "Video URL, Spotify/Deezer/Soundcloud URL, Video searching keywords", type: ApplicationCommandOptionType.String, required: true}
+                {name: "query", description: "Video URL, Spotify/Deezer/Soundcloud URL, Video searching keywords", type: ApplicationCommandOptionType.String, required: true},
+                {name: "play-next", description: "Set this option to true if you want to insert the song(s) just after the current playing one", type: ApplicationCommandOptionType.Boolean}
             ]
         })
     }
@@ -94,10 +95,22 @@ export default class PlatinesPlay extends BotSubCommand {
             content: "Youps: I didn't found this media.",
         })
 
-        medias.forEach(m => {
-            platines.addToQueue(interaction.user, m)
-            converter.convertToYoutubeVideos(m)
-        })
+        const insertNext = interaction.options.getBoolean("play-next");
+
+        ;(async() => {
+            let inserted = 0;
+            const currentIndex = insertNext ? Math.max(0, (await platines.settings).music.active_track) : undefined;
+
+            while(inserted < medias.length) {
+                const media = medias[inserted];
+
+                const insertIndex = currentIndex === undefined ? undefined : currentIndex + inserted;
+                await platines.addToQueue(interaction.user, media, insertIndex);
+                converter.convertToYoutubeVideos(media);
+
+                inserted++
+            }
+        })()
 
         // To avoid searching for the first media as it will not be used
         if(medias.length > 1 && platines.status === "Playing") return interaction.followUp({
@@ -110,7 +123,7 @@ export default class PlatinesPlay extends BotSubCommand {
         })
         const embed = await getInfosEmbed(firstMedia)
         embed.setFooter({
-            text: "Use '/platines play' to do the same!"
+            text: `Use '/platines play' to do the same!`
         })
         interaction.deleteReply().catch(() => undefined)
 

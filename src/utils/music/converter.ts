@@ -17,8 +17,9 @@ export function getBDDKey(track: SpotifyTrack | DeezerTrack | SoundCloudTrack | 
     return { service, id: getID(track.url) }
 }
 export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundCloudTrack | YouTubeVideo, vendors = true): string {
+    if(track instanceof YouTubeVideo && track.title) return track.title
+    
     const title = (track instanceof YouTubeVideo || track instanceof DeezerTrack) ? track.title : track.name
-
     const artists = track instanceof YouTubeVideo ? [track.channel?.name || ""] : (
         "contributors" in track && track.contributors ? track.contributors.map(u => u.name) :
         "artist" in track ? [track.artist.name] :

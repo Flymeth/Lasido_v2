@@ -25,6 +25,7 @@ export default class BotLyrics extends BotCommand {
 
     async execute(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<any> {
         if(!interaction.guild) return
+
         let search = interaction.options.getString("search")
         const byQuery = !!search
         if(!search) {
@@ -52,22 +53,30 @@ export default class BotLyrics extends BotCommand {
             content: "Sorry: This song seams to have no lyrics..."
         })
 
-        const lyricsPartition: string[] = []
         const MAX_EMBED_DESCRIPTION_SIZE = 4090 // I know it's 4096 but your mf
-        while(MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length < lyrics.length) {
-            const boundaries = [MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length, MAX_EMBED_DESCRIPTION_SIZE * (lyricsPartition.length + 1)]
-            
-            lyricsPartition.push(
-                (lyricsPartition.length ? "\n" : "")
-                + lyrics.slice(...boundaries)
-                + (boundaries[1] <= lyrics.length ? "\n..." : "")
-            )
-        }
+        const lyricsPartition: string[] = []
+        const lineSplitedLyrics = lyrics.split(/\r?\n/);
+        lineSplitedLyrics.forEach(line => {
+            if(
+                !lyricsPartition.length
+                || (
+                    (lyricsPartition.at(-1)?.length || 0) + line.length
+                ) > MAX_EMBED_DESCRIPTION_SIZE
+            ) lyricsPartition.push("");
 
-        const embeds = lyricsPartition.map(content => (
+            const lastPartitionIndex = lyricsPartition.length - 1
+            lyricsPartition[lastPartitionIndex]+= (
+                lyricsPartition[lastPartitionIndex] ? "\n" : ""
+            ) + line;
+        })
+
+        const embeds = lyricsPartition.map((content, index) => (
             new EmbedBuilder()
             .setColor(hex_to_int(this.lasido.settings.colors.primary))
             .setDescription(content)
+            .setFooter({
+                text: `Embed ${index + 1} of ${lyricsPartition.length} - Lyrics given by Genius`
+            })
         ))
         embeds[0].setAuthor({
             name: `${geniusSong.title} by ${geniusSong.artist.name}`,

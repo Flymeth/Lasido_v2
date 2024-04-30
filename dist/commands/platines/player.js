@@ -162,6 +162,18 @@ class PlatinePlayer extends SubCommandClass_1.default {
                     playerMessage.delete().catch(() => undefined);
             }
         }
+        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(() => editMessage()) : undefined;
+        const playerUpdated = (guildId) => interaction.guildId === guildId ? editMessage(true) : undefined;
+        const events = {
+            trackChange: (video, id) => onTrackChanged(video, id).then(() => editMessage()),
+            queueChange: settingsUpdated,
+            shuffleChange: settingsUpdated,
+            loopChange: settingsUpdated,
+            paused: () => onStateChanged("pause").then(() => editMessage()),
+            stop: () => onStateChanged("pause").then(() => editMessage()),
+            resumed: () => onStateChanged("playing").then(() => editMessage()),
+            destroy: destroyPlayer,
+        };
         const MusicOptionEmojis = {
             shuffle: "🔀",
             queueLoop: "🔁",
@@ -241,7 +253,12 @@ class PlatinePlayer extends SubCommandClass_1.default {
         async function destroyPlayer() {
             (await lastMessage())?.delete().catch(() => undefined);
             interaction.deleteReply().catch(() => undefined);
-            platines?.updateSettings(s => s.settings.player = undefined);
+            if (platines) {
+                for (const event in events)
+                    platines.removeListener(event, events[event]);
+                platines.lasido.removeListener("playerUpdate", playerUpdated);
+                platines.updateSettings(s => s.settings.player = undefined);
+            }
         }
         async function editMessage(recreateMessageIfStickMode) {
             const messageContent = {
@@ -278,16 +295,9 @@ class PlatinePlayer extends SubCommandClass_1.default {
                     await updateInteractionHandler(message);
                 }).catch(() => destroyPlayer());
         }
-        const settingsUpdated = () => platines.status === "Playing" ? onStateChanged("playing").then(() => editMessage()) : undefined;
-        platines.on("trackChange", (video, id) => onTrackChanged(video, id).then(() => editMessage()));
-        platines.on("queueChange", settingsUpdated);
-        platines.on("shuffleChange", settingsUpdated);
-        platines.on("loopChange", settingsUpdated);
-        platines.on("paused", () => onStateChanged("pause").then(() => editMessage()));
-        platines.on("stop", () => onStateChanged("pause").then(() => editMessage()));
-        platines.on("resumed", () => onStateChanged("playing").then(() => editMessage()));
-        platines.on("destroy", () => destroyPlayer());
-        this.lasido.on("playerUpdate", (guildId) => interaction.guildId === guildId ? editMessage(true) : undefined);
+        for (const event in events)
+            platines.on(event, events[event]);
+        this.lasido.on("playerUpdate", playerUpdated);
         return onStateChanged(platines.status === "Playing" ? "playing" : "pause").then(() => editMessage());
     }
 }

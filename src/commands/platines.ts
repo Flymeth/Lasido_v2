@@ -6,7 +6,6 @@ import PlatinesNext from "./platines/next";
 import PlatinesPrevious from "./platines/previous";
 import PlatineNowPlaying from "./platines/nowplaying";
 import PlatinesPlay from "./platines/play";
-import PlatineQueue from "./platines/queue";
 import PlatinesStop from "./platines/stop";
 import PlatineShuffle from "./platines/shuffle";
 import PlatinePlayer from "./platines/player";
@@ -26,7 +25,7 @@ export default class BotPlatines extends BotCommandGroup {
             dmPermission: false
         }, [
             PlatinesPauseResume, PlatinesNext, PlatinesPrevious, PlatineNowPlaying,
-            PlatinesPlay, PlatineQueue, PlatinesStop, PlatineShuffle, PlatinePlayer,
+            PlatinesPlay, PlatinesStop, PlatineShuffle, PlatinePlayer,
             PlatinesLoop, PlatinesJump, PlatinesDelete, PlatinesClear, PlatinesVolume,
             PlatinesPlayFile
         ])

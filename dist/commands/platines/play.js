@@ -40,7 +40,8 @@ class PlatinesPlay extends SubCommandClass_1.default {
             name: "play",
             description: "Play music",
             options: [
-                { name: "query", description: "Video URL, Spotify/Deezer/Soundcloud URL, Video searching keywords", type: discord_js_1.ApplicationCommandOptionType.String, required: true }
+                { name: "query", description: "Video URL, Spotify/Deezer/Soundcloud URL, Video searching keywords", type: discord_js_1.ApplicationCommandOptionType.String, required: true },
+                { name: "play-next", description: "Set this option to true if you want to insert the song(s) just after the current playing one", type: discord_js_1.ApplicationCommandOptionType.Boolean }
             ]
         });
     }
@@ -114,10 +115,19 @@ class PlatinesPlay extends SubCommandClass_1.default {
             return interaction.editReply({
                 content: "Youps: I didn't found this media.",
             });
-        medias.forEach(m => {
-            platines.addToQueue(interaction.user, m);
-            converter.convertToYoutubeVideos(m);
-        });
+        const insertNext = interaction.options.getBoolean("play-next");
+        ;
+        (async () => {
+            let inserted = 0;
+            const currentIndex = insertNext ? Math.max(0, (await platines.settings).music.active_track) : undefined;
+            while (inserted < medias.length) {
+                const media = medias[inserted];
+                const insertIndex = currentIndex === undefined ? undefined : currentIndex + inserted;
+                await platines.addToQueue(interaction.user, media, insertIndex);
+                converter.convertToYoutubeVideos(media);
+                inserted++;
+            }
+        })();
         if (medias.length > 1 && platines.status === "Playing")
             return interaction.followUp({
                 content: `${interaction.user.toString()} added ${medias.length} songs to queue.`,
@@ -129,7 +139,7 @@ class PlatinesPlay extends SubCommandClass_1.default {
             });
         const embed = await (0, tracks_1.getInfosEmbed)(firstMedia);
         embed.setFooter({
-            text: "Use '/platines play' to do the same!"
+            text: `Use '/platines play' to do the same!`
         });
         interaction.deleteReply().catch(() => undefined);
         if (platines.status !== "Playing") {

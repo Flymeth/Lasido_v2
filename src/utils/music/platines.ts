@@ -11,7 +11,7 @@ import * as converter from "../../utils/music/converter";
 
 const platines_cache = new Map<string, Platines>()
 
-interface PlatinesEvents {
+export interface PlatinesEvents {
     trackChange: (video: YouTubeVideo, index: number) => any,
     resumed: () => any,
     paused: () => any,
@@ -244,12 +244,19 @@ export class Platines extends EventEmitter {
         return done
     }
 
-    async addToQueue(author: GuildMember | User, url: YouTubeVideo | SpotifyTrack | SoundCloudTrack | DeezerTrack | string | URL) {
-        
+    async addToQueue(author: GuildMember | User, url: YouTubeVideo | SpotifyTrack | SoundCloudTrack | DeezerTrack | string | URL, atIndex?: number) {
         const data = await toQueueType(url)
         if(!data) return null
         const queueItem = { author: author.id, ...data }
-        this.updateSettings((s) => s.music.queue.push(queueItem))
+        await this.updateSettings((s) => {
+            if(typeof atIndex === "number") {
+                s.music.queue= [
+                    ...s.music.queue.slice(0, atIndex),
+                    queueItem,
+                    ...s.music.queue.slice(atIndex)
+                ]
+            }else s.music.queue.push(queueItem)
+        })
 
         this.emit("queueChange")
         this.emit("queueAdd", queueItem)

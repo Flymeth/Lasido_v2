@@ -227,12 +227,22 @@ class Platines extends node_events_1.EventEmitter {
         this.emit("nexted");
         return done;
     }
-    async addToQueue(author, url) {
+    async addToQueue(author, url, atIndex) {
         const data = await (0, tracks_1.toQueueType)(url);
         if (!data)
             return null;
         const queueItem = { author: author.id, ...data };
-        this.updateSettings((s) => s.music.queue.push(queueItem));
+        await this.updateSettings((s) => {
+            if (typeof atIndex === "number") {
+                s.music.queue = [
+                    ...s.music.queue.slice(0, atIndex),
+                    queueItem,
+                    ...s.music.queue.slice(atIndex)
+                ];
+            }
+            else
+                s.music.queue.push(queueItem);
+        });
         this.emit("queueChange");
         this.emit("queueAdd", queueItem);
     }

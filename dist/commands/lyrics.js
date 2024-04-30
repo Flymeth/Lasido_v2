@@ -76,17 +76,22 @@ class BotLyrics extends CommandClass_1.default {
             return interaction.editReply({
                 content: "Sorry: This song seams to have no lyrics..."
             });
-        const lyricsPartition = [];
         const MAX_EMBED_DESCRIPTION_SIZE = 4090;
-        while (MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length < lyrics.length) {
-            const boundaries = [MAX_EMBED_DESCRIPTION_SIZE * lyricsPartition.length, MAX_EMBED_DESCRIPTION_SIZE * (lyricsPartition.length + 1)];
-            lyricsPartition.push((lyricsPartition.length ? "\n" : "")
-                + lyrics.slice(...boundaries)
-                + (boundaries[1] <= lyrics.length ? "\n..." : ""));
-        }
-        const embeds = lyricsPartition.map(content => (new discord_js_1.EmbedBuilder()
+        const lyricsPartition = [];
+        const lineSplitedLyrics = lyrics.split(/\r?\n/);
+        lineSplitedLyrics.forEach(line => {
+            if (!lyricsPartition.length
+                || ((lyricsPartition.at(-1)?.length || 0) + line.length) > MAX_EMBED_DESCRIPTION_SIZE)
+                lyricsPartition.push("");
+            const lastPartitionIndex = lyricsPartition.length - 1;
+            lyricsPartition[lastPartitionIndex] += (lyricsPartition[lastPartitionIndex] ? "\n" : "") + line;
+        });
+        const embeds = lyricsPartition.map((content, index) => (new discord_js_1.EmbedBuilder()
             .setColor((0, colors_1.hex_to_int)(this.lasido.settings.colors.primary))
-            .setDescription(content)));
+            .setDescription(content)
+            .setFooter({
+            text: `Embed ${index + 1} of ${lyricsPartition.length} - Lyrics given by Genius`
+        })));
         embeds[0].setAuthor({
             name: `${geniusSong.title} by ${geniusSong.artist.name}`,
             url: geniusSong.url,

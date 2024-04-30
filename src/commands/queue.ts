@@ -1,14 +1,14 @@
 import { ChatInputCommandInteraction, CacheType, ApplicationCommandType, Guild, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageComponentBuilder, ActionRowData, ButtonComponentData, MessageActionRowComponentBuilder, ComponentType, GuildMember, User, Integration } from "discord.js";
-import { Lasido } from "../../_main";
-import { getSettings } from "../../utils/settings";
-import playdl, { YouTubeVideo } from "play-dl";
-import { fromQueueType } from "../../utils/music/tracks";
-import { getPlatines } from "../../utils/music/platines";
-import BotSubCommand from "../../types/SubCommandClass";
-import { hex_to_int } from "../../utils/colors";
-import getTime from "../../utils/time";
+import { Lasido } from "../_main";
+import { getSettings } from "../utils/settings";
+import { YouTubeVideo } from "play-dl";
+import { fromQueueType } from "../utils/music/tracks";
+import { getPlatines } from "../utils/music/platines";
+import { hex_to_int } from "../utils/colors";
+import getTime from "../utils/time";
+import BotCommand from "../types/CommandClass";
 
-export default class PlatineQueue extends BotSubCommand {
+export default class PlatineQueue extends BotCommand {
     constructor(lasido: Lasido) {
         super(lasido, {
             name: "queue",
