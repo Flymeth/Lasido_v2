@@ -1,6 +1,6 @@
 {
   "name": "lasido-v2",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "The v2 of the music discord bot",
   "main": "dist/_main.js",
   "scripts": {

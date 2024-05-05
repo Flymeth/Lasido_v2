@@ -77,14 +77,14 @@ export async function fetchTrackFromDB(id: string, service: service_id) {
 
     const saved = await dbPool.query<{
         YT_ID?: string,
-        INFOS: string,
+        INFOS: object,
         DATE: Date
     }[]>(...params).catch(() => [null]).then(r => r[0]);
 
     if(saved?.INFOS && (
         Date.now() - saved.DATE.getTime()
     ) < refetchVideoInformationsEachMs) {
-        const data = JSON.parse(saved.INFOS)
+        const data: {[key: string]: any} = typeof saved.INFOS === "string" ? JSON.parse(saved.INFOS) : saved.INFOS
         const video = new YouTubeVideo(data)
 
         // ? Some informations are lost when instanciate the class from datas
