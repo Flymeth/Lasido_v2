@@ -1,11 +1,15 @@
 import playdl, { Deezer, DeezerAlbum, DeezerPlaylist, DeezerTrack, SoundCloud, SoundCloudPlaylist, SoundCloudTrack, Spotify, SpotifyAlbum, SpotifyPlaylist, SpotifyTrack, YouTube, YouTubeChannel, YouTubePlayList, YouTubeVideo } from "play-dl"
-import { getPool } from "../db"
+import { getPool } from "../db";
+import { refetchVideoInformationsEachMs } from "../../../database/_settings.json";
 
 export const cache = new Map<string, YouTubeVideo>()
 export type service_id= "so" | "yt" | "sp" | "dz"
 export function getID(url: URL | string) {
     if(typeof url === "string") url = new URL(url)
-    if(playdl.yt_validate(url.toString())) return url.searchParams.get("v")
+    if(playdl.yt_validate(url.toString())) {
+        const id = url.searchParams.get("v")
+        if(id) return id
+    }
     return /\/([^/]+)$/.exec(url.pathname)?.[1] || null
 }
 export function getBDDKey(track: SpotifyTrack | DeezerTrack | SoundCloudTrack | YouTubeVideo) {
@@ -29,6 +33,67 @@ export function getSearchQueryFrom(track: SpotifyTrack | DeezerTrack | SoundClou
     if(vendors) return `Music ${title} by ${artists.join(", ")}`
     else return `${title} ${artists.join(" ")}`
 }
+export function youtubeVideoToJSON(video: YouTubeVideo): object {
+    const result: {[key: string]: any} = {};
+    
+    for(const [prop, data] of Object.entries(video)) {
+        switch (typeof data) {
+            case "function":
+            case "symbol":
+                break;
+            case "object":
+                result[prop] = JSON.parse(
+                    JSON.stringify(data)
+                )
+                break;
+            case "bigint":
+                result[prop] = new Number(data);
+                break;
+            default:
+                result[prop] = data
+                break;
+        }
+    }
+
+    return result
+}
+
+export async function fetchTrackFromDB(id: string, service: service_id) {
+    const dbPool = await getPool();
+
+    const parameters: {[key in service_id | "all"]?: [string, string[]]} = {
+        yt: [
+            "SELECT INFOS, DATE FROM cache WHERE ID = ?", [id]
+        ],
+        all: [
+            "SELECT YT_ID, INFOS, DATE FROM converter "
+            + "JOIN cache ON converter.YT_ID = cache.ID "
+            + "WHERE converter.ID = ? AND service = ?",
+            [id, service]
+        ]
+    }
+    const params = service in parameters ? parameters[service] : parameters.all;
+    if(!params) return null;
+
+    const saved = await dbPool.query<{
+        YT_ID?: string,
+        INFOS: string,
+        DATE: Date
+    }[]>(...params).catch(() => [null]).then(r => r[0]);
+
+    if(saved?.INFOS && (
+        Date.now() - saved.DATE.getTime()
+    ) < refetchVideoInformationsEachMs) {
+        const data = JSON.parse(saved.INFOS)
+        const video = new YouTubeVideo(data)
+
+        // ? Some informations are lost when instanciate the class from datas
+        video.durationInSec= data.durationInSec
+
+        return video
+    }
+    return null;
+}
 
 /**
  * Convert a link or platform's track into a youtube video(s)
@@ -46,8 +111,6 @@ export async function convertToYoutubeVideos(...tracks: (
         videos: YouTubeVideo[]
     }
 )[]> {
-    const dbPool = await getPool()
-    
     const result = await Promise.all(tracks.map(async (track, init_index) => {
         if(typeof track === "string" || track instanceof URL) {
             const query = track.toString()
@@ -60,11 +123,8 @@ export async function convertToYoutubeVideos(...tracks: (
             if(source.startsWith("yt")) {
                 if(source === "yt_video") {
                     const video_ID = getID(query)
-                    const knownVideo = await dbPool.query<{INFOS: string}>(
-                        "SELECT INFOS FROM cache WHERE ID = ?", [video_ID]
-                    ).catch(() => null)
-
-                    if(knownVideo?.INFOS) return { init_index, data: new YouTubeVideo(knownVideo.INFOS) }
+                    const saved = video_ID && await fetchTrackFromDB(video_ID, "yt")
+                    if(saved) return { data: saved, init_index }
                     else {
                         let videoDetails;
                         while(!videoDetails) {
@@ -90,21 +150,11 @@ export async function convertToYoutubeVideos(...tracks: (
                 ) {
                     const service = source.slice(0, 2) as service_id
                     const id = getID(query)
-                    if(id) {
-                        const saved = await dbPool.query<{
-                            YT_ID: string,
-                            INFOS?: object
-                        }>(
-                            "SELECT YT_ID, INFOS FROM converter "
-                            + "JOIN cache ON converter.YT_ID = cache.ID "
-                            + "WHERE converter.ID = ? AND service = ?",
-                            [id, service]
-                        ).catch(() => null)
-                        if(saved?.INFOS) return { init_index, data: new YouTubeVideo(saved.INFOS) }
-                    }
+                    const saved = id && await fetchTrackFromDB(id, service);
+                    if(saved) return { data: saved, init_index }
                 }
                 
-                //? Si la ressource n'est pas dans la bdd...
+                //? Si la ressource n'est pas dans la bdd ou que la ressource est trop ancienne...
                 const answer = await (
                     source.startsWith("dz") ? playdl.deezer :
                     source.startsWith("so") ? playdl.soundcloud : playdl.spotify
@@ -144,19 +194,10 @@ export async function convertToYoutubeVideos(...tracks: (
             } }
         } else {
             const { id, service } = getBDDKey(track)
-            const saved = await dbPool.query<{
-                YT_ID: string,
-                INFOS?: object
-            }>(
-                "SELECT YT_ID, INFOS FROM converter "
-                + "JOIN cache ON converter.YT_ID = cache.ID "
-                + "WHERE converter.ID = ? AND service = ?",
-                [id, service]
-            ).catch(() => null)
-
-            if(saved?.INFOS) {
-                return { init_index, data: new YouTubeVideo(saved.INFOS) }
-            }else {
+            const saved = id && await fetchTrackFromDB(id, service);
+            
+            if(saved) return { data: saved, init_index }
+            else {
                 const query = getSearchQueryFrom(track)
                 const video = await playdl.search(query, { source: { youtube: "video" }, limit: 1 }).then(r => r[0])
                 saveToDB(video, track)
@@ -192,14 +233,15 @@ export function individualyConvertToYoutubeVideos(...tracks: (
 
 async function saveToDB(youtubeVideo: YouTubeVideo, source?: SpotifyTrack | DeezerTrack | SoundCloudTrack | YouTubeVideo) {
     const dbPool = await getPool()
-    const data = JSON.stringify(youtubeVideo.toJSON())
+    const data = youtubeVideoToJSON(youtubeVideo)
+
     await dbPool.query(
-        `INSERT INTO cache VALUES (?, ?) ON DUPLICATE KEY UPDATE \`INFOS\` = ?`, [youtubeVideo.id, data, data]
+        "INSERT INTO cache VALUES (?, ?, NOW()) ON DUPLICATE KEY UPDATE `INFOS` = ?, `DATE` = NOW()", [youtubeVideo.id, data, data]
     )
     if(source) {
         const { id, service } = getBDDKey(source)
         await dbPool.query(
-            `INSERT INTO converter (ID, SERVICE, YT_ID) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE \`YT_ID\` = ?`, [id, service, youtubeVideo.id, youtubeVideo.id]
+            "INSERT INTO converter (ID, SERVICE, YT_ID) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `YT_ID` = ?", [id, service, youtubeVideo.id, youtubeVideo.id]
         )
     }
 }

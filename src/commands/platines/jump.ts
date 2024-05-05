@@ -15,6 +15,8 @@ export default class PlatinesJump extends BotSubCommand {
     }
     async execute(interaction: ChatInputCommandInteraction<CacheType>, ...args: any[]): Promise<any> {
         if(!interaction.guild) return
+        await interaction.deferReply();
+
         const platines = getPlatines(this.lasido, interaction.guild)
         if(!platines) return interaction.reply({
             content: "I must be connected to a voice channel to perform that command.",
@@ -28,10 +30,10 @@ export default class PlatinesJump extends BotSubCommand {
         const index = given_index < 0 ? given_index : given_index - 1
         const done = await platines.skipTo(index)
 
-        if(done) interaction.reply({
+        if(done) interaction.editReply({
             content: "Done!"
         })
-        else interaction.reply({
+        else interaction.editReply({
             content: "Oups... Cannot jump to that track..."
         })
     }

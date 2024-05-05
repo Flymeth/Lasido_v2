@@ -19,6 +19,7 @@ class PlatinesJump extends SubCommandClass_1.default {
     async execute(interaction, ...args) {
         if (!interaction.guild)
             return;
+        await interaction.deferReply();
         const platines = (0, platines_1.getPlatines)(this.lasido, interaction.guild);
         if (!platines)
             return interaction.reply({
@@ -34,11 +35,11 @@ class PlatinesJump extends SubCommandClass_1.default {
         const index = given_index < 0 ? given_index : given_index - 1;
         const done = await platines.skipTo(index);
         if (done)
-            interaction.reply({
+            interaction.editReply({
                 content: "Done!"
             });
         else
-            interaction.reply({
+            interaction.editReply({
                 content: "Oups... Cannot jump to that track..."
             });
     }

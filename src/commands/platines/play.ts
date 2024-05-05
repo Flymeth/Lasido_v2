@@ -99,12 +99,14 @@ export default class PlatinesPlay extends BotSubCommand {
 
         ;(async() => {
             let inserted = 0;
-            const currentIndex = insertNext ? Math.max(0, (await platines.settings).music.active_track) : undefined;
+            const currentIndex = insertNext ? Math.max(0, (await platines.settings).music.active_track) + 1 : undefined;
 
             while(inserted < medias.length) {
                 const media = medias[inserted];
 
-                const insertIndex = currentIndex === undefined ? undefined : currentIndex + inserted;
+                const insertIndex = (
+                    currentIndex === undefined || platines.status !== "Playing"
+                ) ? undefined : currentIndex + inserted;
                 await platines.addToQueue(interaction.user, media, insertIndex);
                 converter.convertToYoutubeVideos(media);
 

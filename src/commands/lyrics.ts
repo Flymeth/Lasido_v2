@@ -6,6 +6,7 @@ import { fromQueueType } from "../utils/music/tracks";
 import { hex_to_int } from "../utils/colors";
 import * as genious from "genius-lyrics";
 import { getSearchQueryFrom } from "../utils/music/converter";
+import { splitByLength } from "../utils/textSplit";
 const client = new genious.Client()
 
 export default class BotLyrics extends BotCommand {
@@ -54,21 +55,7 @@ export default class BotLyrics extends BotCommand {
         })
 
         const MAX_EMBED_DESCRIPTION_SIZE = 4090 // I know it's 4096 but your mf
-        const lyricsPartition: string[] = []
-        const lineSplitedLyrics = lyrics.split(/\r?\n/);
-        lineSplitedLyrics.forEach(line => {
-            if(
-                !lyricsPartition.length
-                || (
-                    (lyricsPartition.at(-1)?.length || 0) + line.length
-                ) > MAX_EMBED_DESCRIPTION_SIZE
-            ) lyricsPartition.push("");
-
-            const lastPartitionIndex = lyricsPartition.length - 1
-            lyricsPartition[lastPartitionIndex]+= (
-                lyricsPartition[lastPartitionIndex] ? "\n" : ""
-            ) + line;
-        })
+        const lyricsPartition = splitByLength(lyrics, MAX_EMBED_DESCRIPTION_SIZE, /\r?\n/)
 
         const embeds = lyricsPartition.map((content, index) => (
             new EmbedBuilder()

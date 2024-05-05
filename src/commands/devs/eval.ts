@@ -1,6 +1,9 @@
-import { ActivityType, ApplicationCommandOptionType, ApplicationCommandType, CacheType, ChatInputCommandInteraction } from "discord.js";
+import { ActivityType, ApplicationCommandOptionType, ApplicationCommandType, CacheType, ChatInputCommandInteraction, codeBlock, EmbedBuilder } from "discord.js";
 import { Lasido } from "../../_main";
 import BotSubCommand from "../../types/SubCommandClass";
+import {inspect} from "util";
+import { splitByLength } from "../../utils/textSplit";
+import { hex_to_int } from "../../utils/colors";
 
 export default class DevsEvalCommand extends BotSubCommand {
     constructor(lasido: Lasido) {
@@ -22,14 +25,34 @@ export default class DevsEvalCommand extends BotSubCommand {
         let result: string;
         try {
             const answer = eval(code)
-            if(typeof answer === "object") result = JSON.stringify(answer)
+            if(typeof answer === "object") result = inspect(answer, {
+                compact: 2,
+                depth: 1,
+                getters: true,
+                sorted: true,
+            })
             else result = "" + answer
         } catch (error: any) {
-            result = "" + error
+            result = "<ERROR> " + error
         }
 
+        const MAX_EMBED_DESCRIPTION_SIZE = 4080 // I know it's 4096 but your mf
+        const resultPartitions = splitByLength(result, MAX_EMBED_DESCRIPTION_SIZE, /\r?\n/)
+        
+        const embeds = resultPartitions.map(description => 
+            new EmbedBuilder()
+            .setDescription(codeBlock("js", description))
+            .setColor(hex_to_int(
+                this.lasido.settings.colors.primary
+            ))
+            .setFooter({
+                text: `Input: '${code}'`
+            })
+        )
+
         await interaction.editReply({
-            content: "```" + result.replaceAll("`", "\`") + "```"
+            content: "",
+            embeds
         })
     }
 }

@@ -250,6 +250,8 @@ export class Platines extends EventEmitter {
         const queueItem = { author: author.id, ...data }
         await this.updateSettings((s) => {
             if(typeof atIndex === "number") {
+                if(s.music.active_track >= atIndex) s.music.active_track++;
+
                 s.music.queue= [
                     ...s.music.queue.slice(0, atIndex),
                     queueItem,

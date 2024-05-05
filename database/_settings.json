@@ -18,5 +18,6 @@
             "black": "#1A1B25",
             "white": "#EBE9E9"
         }
-    }
+    },
+    "refetchVideoInformationsEachMs": 2.592e+9
 }

@@ -33,6 +33,7 @@ const tracks_1 = require("../utils/music/tracks");
 const colors_1 = require("../utils/colors");
 const genious = __importStar(require("genius-lyrics"));
 const converter_1 = require("../utils/music/converter");
+const textSplit_1 = require("../utils/textSplit");
 const client = new genious.Client();
 class BotLyrics extends CommandClass_1.default {
     constructor(lasido) {
@@ -77,15 +78,7 @@ class BotLyrics extends CommandClass_1.default {
                 content: "Sorry: This song seams to have no lyrics..."
             });
         const MAX_EMBED_DESCRIPTION_SIZE = 4090;
-        const lyricsPartition = [];
-        const lineSplitedLyrics = lyrics.split(/\r?\n/);
-        lineSplitedLyrics.forEach(line => {
-            if (!lyricsPartition.length
-                || ((lyricsPartition.at(-1)?.length || 0) + line.length) > MAX_EMBED_DESCRIPTION_SIZE)
-                lyricsPartition.push("");
-            const lastPartitionIndex = lyricsPartition.length - 1;
-            lyricsPartition[lastPartitionIndex] += (lyricsPartition[lastPartitionIndex] ? "\n" : "") + line;
-        });
+        const lyricsPartition = (0, textSplit_1.splitByLength)(lyrics, MAX_EMBED_DESCRIPTION_SIZE, /\r?\n/);
         const embeds = lyricsPartition.map((content, index) => (new discord_js_1.EmbedBuilder()
             .setColor((0, colors_1.hex_to_int)(this.lasido.settings.colors.primary))
             .setDescription(content)
