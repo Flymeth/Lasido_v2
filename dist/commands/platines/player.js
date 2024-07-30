@@ -256,7 +256,7 @@ class PlatinePlayer extends SubCommandClass_1.default {
             if (platines) {
                 for (const event in events)
                     platines.removeListener(event, events[event]);
-                platines.lasido.removeListener("playerUpdate", playerUpdated);
+                platines.lasido.off("playerUpdate", playerUpdated);
                 platines.updateSettings(s => s.settings.player = undefined);
             }
         }

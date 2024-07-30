@@ -44,6 +44,15 @@ class Platines extends node_events_1.EventEmitter {
         this.player = voice.player;
         this.lasido = lasido;
         this.guild = guild;
+        this.player.on(voice_2.AudioPlayerStatus.Idle, () => this.next());
+        this.on("volumeChange", async (_, value) => {
+            this.currentRessource?.ressource.volume?.setVolume(value);
+        });
+        this.player.on("error", (err) => {
+            console.error(`An error with the current ressource:`);
+            console.log(err);
+            this.stop("Player just had a problem...");
+        });
     }
     destroy() {
         this.player.removeAllListeners(voice_2.AudioPlayerStatus.Idle);
@@ -66,25 +75,9 @@ class Platines extends node_events_1.EventEmitter {
         return channel.send(message).catch(() => undefined);
     }
     async play(ressource, source = "streaming_provider") {
-        const { Idle } = voice_2.AudioPlayerStatus;
-        if (!this.player.listenerCount(Idle)) {
-            this.player.on(Idle, () => this.next());
-        }
-        if (!this.listenerCount("volumeChange")) {
-            this.on("volumeChange", async (_, value) => {
-                this.currentRessource?.ressource.volume?.setVolume(value);
-            });
-        }
-        if (!this.player.listenerCount("error")) {
-            const { stop } = this;
-            this.player.on("error", err => {
-                console.error(`An error with the current ressource:`);
-                console.log(err);
-                stop("Player just had a problem...");
-            });
-        }
         this.currentRessource = {
-            ressource, source
+            ressource,
+            source,
         };
         this.currentRessource.ressource.volume?.setVolume((await this.settings).music.options.volume);
         this.player.play(this.currentRessource.ressource);
@@ -98,8 +91,10 @@ class Platines extends node_events_1.EventEmitter {
             console.error(`Track with id <${id}> cannot be played.`);
             return false;
         }
-        this.updateSettings((s) => s.music.active_track = id);
-        const infos = await (0, tracks_1.fromQueueType)(track).then(d => converter.convertToYoutubeVideos(d)).then(r => r[0]);
+        this.updateSettings((s) => (s.music.active_track = id));
+        const infos = await (0, tracks_1.fromQueueType)(track)
+            .then((d) => converter.convertToYoutubeVideos(d))
+            .then((r) => r[0]);
         if (!(infos instanceof play_dl_1.YouTubeVideo)) {
             console.error(`I did not found any youtube video for track with id <${track.src}:${track.id}>.`);
             return false;
@@ -108,13 +103,13 @@ class Platines extends node_events_1.EventEmitter {
         const ressource = await (0, tracks_1.newAudioResource)(infos);
         if (!ressource) {
             this.broadcast({
-                content: `Cannot create ressource from url "${infos.url.toString()}".`
+                content: `Cannot create ressource from url "${infos.url.toString()}".`,
             }, true);
             return false;
         }
         (0, tracks_1.getInfosEmbed)(infos).then((embed) => this.broadcast({
             content: "Now playing:",
-            embeds: [embed]
+            embeds: [embed],
         }));
         this.play(ressource);
         return true;
@@ -146,14 +141,15 @@ class Platines extends node_events_1.EventEmitter {
         this.broadcast(`${reason} - The player stopped.`, true);
         this.currentRessource = undefined;
         if (reset_active_track)
-            this.updateSettings(s => s.music.active_track = -1);
+            this.updateSettings((s) => (s.music.active_track = -1));
         this.emit("stop");
         return done;
     }
     get status() {
         const { status } = this.player.state;
         for (const key in voice_2.AudioPlayerStatus) {
-            if (status === voice_2.AudioPlayerStatus[key])
+            if (status ===
+                voice_2.AudioPlayerStatus[key])
                 return key;
         }
         throw new Error("Code error: this shouldn't supposed to append...");
@@ -175,7 +171,7 @@ class Platines extends node_events_1.EventEmitter {
         return choosedIndex;
     }
     async next() {
-        const { active_track, queue, options: { loop, shuffle } } = (await this.settings).music;
+        const { active_track, queue, options: { loop, shuffle }, } = (await this.settings).music;
         if (loop.active && loop.loop_type === "song") {
             const done = await this.playTrack(active_track);
             this.emit("nexted");
@@ -204,7 +200,7 @@ class Platines extends node_events_1.EventEmitter {
         return done;
     }
     async previous() {
-        const { active_track, queue, options: { loop, shuffle } } = (await this.settings).music;
+        const { active_track, queue, options: { loop, shuffle }, } = (await this.settings).music;
         if (loop.active && loop.loop_type === "song") {
             const done = await this.playTrack(active_track);
             this.emit("nexted");
@@ -239,7 +235,7 @@ class Platines extends node_events_1.EventEmitter {
                 s.music.queue = [
                     ...s.music.queue.slice(0, atIndex),
                     queueItem,
-                    ...s.music.queue.slice(atIndex)
+                    ...s.music.queue.slice(atIndex),
                 ];
             }
             else
